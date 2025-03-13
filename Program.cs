@@ -11,7 +11,7 @@
 
         static void Main(string[] args)
         {
-            Console.WriteLine("Вас приветствует бот.");
+            Console.WriteLine("Вас приветствует бот.");//приветствие
             while(true)
             {
                 //вывод приветствия и список доступных команд
@@ -32,25 +32,13 @@
                 //обработка команды от пользователя
                 switch (Input[0])
                 {
-                    case "/start":
-                        ComandStart();
-                        continue;
-                    case "/help":
-                        ComandHelp();
-                        break;
-                    case "/info":
-                        ComandInfo();
-                        break;
-                    case "/echo":
-                        ComandEcho();
-                        break;
-                    case "/exit":
-                        return;
-                    default:
-                        WrongInput();
-                        break;
+                    case "/start":ComandStart();continue;
+                    case "/help":ComandHelp();break;
+                    case "/info":ComandInfo();break;
+                    case "/echo":ComandEcho();break;
+                    case "/exit":return;
+                    default:WrongInput();break;
                 }
-                
             }
             //-------------------------------------------------------------
             
