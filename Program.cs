@@ -14,7 +14,7 @@
 
         public static List<string> Tasks = new List<string>(); // список задач
         public static bool ProgramIsStarting = false; // введена команда Start, программа запущена
-
+        
         static void Main(string[] args)
         {
             Console.WriteLine("Вас приветствует бот.");//приветствие
