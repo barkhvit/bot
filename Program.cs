@@ -1,4 +1,6 @@
-﻿namespace Bot
+﻿using System.Linq.Expressions;
+
+namespace Bot
 {
     internal class Program
     {
@@ -18,36 +20,44 @@
         static void Main(string[] args)
         {
             Console.WriteLine("Вас приветствует бот.");//приветствие
+
             while(true)
             {
-                //вывод приветствия и список доступных команд
-                if(!ProgramIsStarting) Welcome(Name);
+                try
+                {
+                    //вывод приветствия и список доступных команд
+                    if (!ProgramIsStarting) Welcome(Name);
 
-                //получение команды от пользователя
-                string input = Console.ReadLine();
-                if (input != null)
-                {
-                    Input = input.Split(" ",2);
-                }
-                else
-                {
-                    WrongInput();
-                    continue;
-                }
+                    //получение команды от пользователя
+                    string input = Console.ReadLine();
+                    if (input != null)
+                    {
+                        Input = input.Split(" ", 2);
+                    }
+                    else
+                    {
+                        WrongInput();
+                        continue;
+                    }
 
-                //обработка команды от пользователя
-                switch (Input[0])
+                    //обработка команды от пользователя
+                    switch (Input[0])
+                    {
+                        case "/start": ComandStart(); continue;
+                        case "/help": ComandHelp(); break;
+                        case "/info": ComandInfo(); break;
+                        case "/echo": ComandEcho(); break;
+                        case "/addtask": ComandAddTask(); break;
+                        case "/showtasks": ComandShowTasks(); break;
+                        case "/removetask": ComandRemoveTasks(); break;
+                        case "/clear": ComandClear(); break;
+                        case "/exit": return;
+                        default: WrongInput(); break;
+                    }
+                }
+                catch(Exception e)
                 {
-                    case "/start":ComandStart();continue;
-                    case "/help":ComandHelp();break;
-                    case "/info":ComandInfo();break;
-                    case "/echo":ComandEcho();break;
-                    case "/addtask":ComandAddTask();break;
-                    case "/showtasks": ComandShowTasks(); break;
-                    case "/removetask": ComandRemoveTasks(); break;
-                    case "/clear": ComandClear(); break;
-                    case "/exit":return;
-                    default:WrongInput();break;
+                    Console.WriteLine($"\nПроизошла непредвиденная ошибка: \n{e.GetType}\n{e.Message}\n{e.InnerException}\n{e.StackTrace}");
                 }
             }
             //-------------------------------------------------------------
