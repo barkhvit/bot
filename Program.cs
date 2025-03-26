@@ -1,5 +1,7 @@
 ﻿using System.Linq.Expressions;
 using static System.Net.Mime.MediaTypeNames;
+using Otus.ToDoList.ConsoleBot;
+using System.Threading.Channels;
 
 namespace Bot
 {
@@ -18,10 +20,11 @@ namespace Bot
         public static List<string> Tasks = new List<string>(); // список задач
         public static bool ProgramIsStarting = false; // введена команда Start, программа запущена
 
+        
         static void Main(string[] args)
         {
             Console.WriteLine("Вас приветствует бот.");//приветствие
-
+            
             while(true)
             {
                 try
@@ -81,6 +84,8 @@ namespace Bot
                 {
                     Console.WriteLine($"\nПроизошла непредвиденная ошибка: \n{e.GetType}\n{e.Message}\n{e.InnerException}\n{e.StackTrace}");
                 }
+
+
             }
             //-------------------------------------------------------------
             

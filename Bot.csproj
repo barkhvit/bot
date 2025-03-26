@@ -7,4 +7,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Otus.ToDoList.ConsoleBot\C-Sharp-Basic-main\C-Sharp-Basic-main\Homeworks\5 ООП классы и интерфейсы\Otus.ToDoList.ConsoleBot\Otus.ToDoList.ConsoleBot.csproj" />
+  </ItemGroup>
+
 </Project>
