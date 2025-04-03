@@ -20,7 +20,7 @@ namespace Bot
         Update _update; //обновление от пользователя
         string[] _text; //текст от пользователя
         bool isRegisteredUser = false; //зарегистрирован пользователь или нет
-        string CommandsForRegUser = "\n /info \n /help \n /addtask \n /removetask \n /completetask \n /showtasks";//список команд для зарегистрированного пользователя
+        string CommandsForRegUser = "\n /info \n /help \n /addtask \n /removetask \n /completetask \n /showtasks \n /showalltasks";//список команд для зарегистрированного пользователя
         string CommandsForNotRegUser = "\n /start - начать\n /info - о программе \n /help - помощь";//список команд для незарегистрированного пользователя
         const int TaskLimit = 30;//лимит по длине задачи
 
@@ -51,6 +51,7 @@ namespace Bot
                     case "/info": botClient.SendMessage(update.Message.Chat, "| Версия программы: 2.0 | Дата создания: 30.03.2025 | Автор: Бархатов Виталий"); ; break;
                     case "/addtask": AddTaskCommand();break;
                     case "/showtasks": ShowTasksCommand(); break;
+                    case "/showalltasks": ShowAllTasksCommand(); break;
                     case "/completetask": CompleteTaskCommand();break;
                     case "/removetask": RemoveTaskCommand(); break;
                     case "/showusers": break;
@@ -84,7 +85,27 @@ namespace Bot
             }
         }
 
-        
+        //показать все задачи (активные и завершенные)
+        private void ShowAllTasksCommand()
+        {
+            if (!isRegisteredUser)//если пользователь не зарегистрирован
+            {
+                _telegramBotClient.SendMessage(_update.Message.Chat, "для начала работы введите /start");
+                return;
+            }
+            string str = "Задач нет";
+            string str2 = "";
+            if (_todoService.GetToDoItems().Count != 0)
+            {
+                str = "Список задач:";
+                foreach(ToDoItem toDoItem in _todoService.GetToDoItems())
+                {
+                    str2 = $"\n  ({toDoItem.State}) {toDoItem.Name} - {toDoItem.CreatedAt} - {toDoItem.Id}";
+                    str = str + str2;
+                }
+            }
+            _telegramBotClient.SendMessage(_update.Message.Chat, str);
+        }
 
         private void StartCommand() //команда старт
         {
@@ -97,12 +118,17 @@ namespace Bot
 
         private void ShowTasksCommand()
         {
+            if (!isRegisteredUser)//если пользователь не зарегистрирован
+            {
+                _telegramBotClient.SendMessage(_update.Message.Chat, "для начала работы введите /start");
+                return;
+            }
             string str = "Активных задач нет";
             IReadOnlyList<ToDoItem> toDoItems = new List<ToDoItem>();
             toDoItems = _todoService.GetActiveByUserId(_user.UserId);
             if (toDoItems.Count != 0)
             {
-                str = "Список задач:";
+                str = "Список активных задач:";
                 foreach(ToDoItem Item in toDoItems)
                 {
                     str = str + $"\n{Item.Name} - {Item.CreatedAt} - {Item.Id}";
@@ -118,16 +144,23 @@ namespace Bot
                 _telegramBotClient.SendMessage(_update.Message.Chat, "для начала работы введите /start");
                 return;
             }
-            if(_text.Length == 1 || _text[1] == "") throw new IncorrectTaskException();
+            if(_text.Length == 1 || _text[1] == "") throw new IncorrectTaskException();//проверяем, что задача не пустая строка
+            if (!_todoService.IsNameNotRepeats(_text[1], _user.UserId)) throw new DuplicateTaskException(_text[1]); // проверяем задачу на дубликат для этого пользователя
+            if (_text[1].Length > TaskLimit) throw new TaskLengthLimitException(_text[1].Length, TaskLimit); //проверяем, что длина задачи не превышает допустимое значение TaskLimit 
             ValidateString(_text[1]);
-            _telegramBotClient.SendMessage(_update.Message.Chat, $"Задача \"{_todoService.Add(_user, _text[1]).Name}\" добавлена, GuidId: {_todoService.Add(_user, _text[1]).Id}");
+            ToDoItem toDoItem = _todoService.Add(_user, _text[1]);
+            _telegramBotClient.SendMessage(_update.Message.Chat, $"Задача \"{toDoItem.Name}\" добавлена, GuidId: {toDoItem.Id}");
         }
         
         private void ComandHelp()//команда help
         {
             string str = "Для начала работы введите команду /start";
             if (isRegisteredUser)
-                str = "Доступные команды:\n /addtask \n /removetask \n /completetask \n /showtasks";
+                str = "Доступные команды:\n /addtask название задачи - добавить новую задачу" +
+                    "\n /removetask Id - удалить задачу" +
+                    " \n /completetask Id - завершить задачу" +
+                    " \n /showtasks - показать активные задачи" +
+                    " \n /showalltasks - показать все задачи";
             _telegramBotClient.SendMessage(_update.Message.Chat, str);
         }
 

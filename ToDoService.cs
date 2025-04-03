@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Otus.ToDoList.ConsoleBot.Types;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -54,6 +55,17 @@ namespace Bot
                 if(toDoItem.Id == id)
                     toDoItem.State = ToDoItemState.Completed;
             }
+        }
+
+        //перебирает по именам активные задачи и проверяет есть такая задача или нет у данного пользователя
+        public bool IsNameNotRepeats(string name,Guid userId)
+        {
+            bool answer = true;
+            foreach(ToDoItem Item in GetActiveByUserId(userId))
+            {
+                if (Item.Name == name) answer = false;
+            }
+            return answer;
         }
     }
 }
