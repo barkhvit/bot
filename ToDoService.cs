@@ -30,8 +30,9 @@ namespace Bot
             int i = 0;
             foreach(ToDoItem toDoItem in _toDoItems)
             {
-                if (toDoItem.Id == id) _toDoItems.RemoveAt(i);
+                if (toDoItem.Id == id)
                 {
+                    _toDoItems.RemoveAt(i);
                     isDelete = true;
                     break;
                 }
