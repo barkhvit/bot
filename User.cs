@@ -8,9 +8,9 @@ namespace Bot
 {
     public class User
     {
-        public Guid UserId;
-        public long TelegramUserId;
-        public string TelegramUserName;
-        public DateTime RegisteredAt;
+        public Guid UserId { get; set; }
+        public long TelegramUserId { get; set; }
+        public string TelegramUserName { get; set; }
+        public DateTime RegisteredAt { get; set; }
     }
 }

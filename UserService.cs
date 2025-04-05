@@ -8,7 +8,10 @@ namespace Bot
 {
     public class UserService : IUserService
     {
+        //хранилище с пользователями
         List<User> _users = new();
+
+        //возвращает null если пользователя нет в хранилище
         public User? GetUser(long telegramUserId)
         {
             foreach(User u in _users)
@@ -19,22 +22,25 @@ namespace Bot
             return null;
         }
 
+        //регистрация пользователя
         public User RegisterUser(long telegramUserId, string telegramUserName)
         {
-            foreach (User u in _users)
+            //проверяем зарегистрирован пользователь или нет? Возвращаем пользователя из Хранилища, если зарегистрирован
+            if (GetUser(telegramUserId) == null)
             {
-                if (u.TelegramUserId == telegramUserId)
-                    return u;
+                //Если не зарегистрирован, то создаем нового, добавляем в Хранилище и возвращаем его
+                User user = new User()
+                {
+                    UserId = Guid.NewGuid(),
+                    TelegramUserId = telegramUserId,
+                    TelegramUserName = telegramUserName,
+                    RegisteredAt = DateTime.UtcNow
+                };
+                _users.Add(user);
+                return user;
             }
-            User user = new User()
-            {
-                UserId = Guid.NewGuid(),
-                TelegramUserId = telegramUserId,
-                TelegramUserName = telegramUserName,
-                RegisteredAt = DateTime.UtcNow
-            };
-            _users.Add(user);
-            return user;
+            else
+                return GetUser(telegramUserId);
         }
     }
 }

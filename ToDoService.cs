@@ -24,13 +24,17 @@ namespace Bot
         }
 
         //удаление задачи по Id
-        public void Delete(Guid id)
+        public void Delete(Guid id, out bool isDelete)
         {
+            isDelete = false;
             int i = 0;
             foreach(ToDoItem toDoItem in _toDoItems)
             {
                 if (toDoItem.Id == id) _toDoItems.RemoveAt(i);
-                break;
+                {
+                    isDelete = true;
+                    break;
+                }
                 i++;
             }      
         }
@@ -48,12 +52,18 @@ namespace Bot
         }
 
         //переводит статус задачи в исполнено
-        public void MarkCompleted(Guid id)
+        public void MarkCompleted(Guid id, out bool isComplete)
         {
-            foreach(ToDoItem toDoItem in _toDoItems)
+            isComplete = false;
+            foreach (ToDoItem toDoItem in _toDoItems)
             {
-                if(toDoItem.Id == id)
+                if (toDoItem.Id == id)
+                {
                     toDoItem.State = ToDoItemState.Completed;
+                    toDoItem.StateChangedAt = DateTime.UtcNow;
+                    isComplete = true;
+                }
+                    
             }
         }
 
@@ -66,6 +76,18 @@ namespace Bot
                 if (Item.Name == name) answer = false;
             }
             return answer;
+        }
+
+        //возвращает все задачи для пользователя
+        public IReadOnlyList<ToDoItem> GetAllByUserId(Guid userId)
+        {
+            List<ToDoItem> toDoItemsActive = new List<ToDoItem>();
+            foreach (ToDoItem toDoItem in _toDoItems)
+            {
+                if (toDoItem.User.UserId == userId)
+                    toDoItemsActive.Add(toDoItem);
+            }
+            return toDoItemsActive;
         }
     }
 }

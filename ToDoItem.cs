@@ -13,7 +13,7 @@ namespace Bot
         public string Name { get; private set; }
         public DateTime CreatedAt { get; private set; }
         public ToDoItemState State { get; set; }
-        public DateTime? StateChangedAt { get; private set; }
+        public DateTime? StateChangedAt { get; set; }
 
         public ToDoItem(User user,string name)
         {
