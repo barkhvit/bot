@@ -9,6 +9,10 @@ namespace Bot
 {
     public class ToDoService : IToDoService
     {
+        const int TaskLimit = 30;//лимит по длине задачи
+        const int ToDoItemsLimit = 5; //лимит по кол-ву задач на пользователя
+
+
         List<ToDoItem> _toDoItems = new List<ToDoItem>();
         public List<ToDoItem> GetToDoItems()
         {
@@ -16,9 +20,14 @@ namespace Bot
         }
 
         //добавляет задачу и возвращает ее
-        public ToDoItem Add(User user, string name)
+        public ToDoItem Add(User user, string[] text)
         {
-            ToDoItem toDoItem = new(user, name);
+            if (text.Length == 1 || text[1] == "") throw new IncorrectTaskException();//проверяем, что задача не пустая строка
+            if (!IsNameNotRepeats(text[1], user.UserId)) throw new DuplicateTaskException(text[1]); // проверяем задачу на дубликат для этого пользователя
+            if (text[1].Length > TaskLimit) throw new TaskLengthLimitException(text[1].Length, TaskLimit); //проверяем, что длина задачи не превышает допустимое значение TaskLimit
+            int i = text[1].Replace(" ", "").Length; if (i == 0) throw new IncorrectTaskException();//проверяем что строка не состоит только из пробелов
+
+            ToDoItem toDoItem = new(user, text[1]);
             _toDoItems.Add(toDoItem);
             return toDoItem;
         }
@@ -69,7 +78,7 @@ namespace Bot
         }
 
         //перебирает по именам активные задачи и проверяет есть такая задача или нет у данного пользователя
-        public bool IsNameNotRepeats(string name,Guid userId)
+        private bool IsNameNotRepeats(string name,Guid userId)
         {
             bool answer = true;
             foreach(ToDoItem Item in GetActiveByUserId(userId))

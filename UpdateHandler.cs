@@ -19,6 +19,7 @@ namespace Bot
         private readonly string CommandsForRegUser = "\n /info \n /help \n /addtask \n /removetask \n /completetask \n /showtasks \n /showalltasks";//список команд для зарегистрированного пользователя
         private readonly string CommandsForNotRegUser = "\n /start - начать\n /info - о программе \n /help - помощь";//список команд для незарегистрированного пользователя
         private readonly int TaskLimit = 30;//лимит по длине задачи
+        private readonly int ToDoItemsLimit = 5; //лимит по кол-ву задач на пользователя
 
         //КОНСТРУКТОР
         public UpdateHandler(ITelegramBotClient telegramBotClient, IUserService userService, IToDoService todoService)
@@ -32,8 +33,8 @@ namespace Bot
         public void HandleUpdateAsync(ITelegramBotClient botClient, Update update)
         {
             string[] _text = update.Message.Text.Split(' ',2); //сообщение от пользователя помещаем в двумерный массив
-            //пользователь
             User? _user = _userService.GetUser(update.Message.From.Id);//присваиваем пользователя локальной переменной
+            //ToDoService todoService = (ToDoService)_todoService;
 
             try
             {
@@ -87,6 +88,7 @@ namespace Bot
         //показать все задачи (активные и завершенные для пользователя)
         private void ShowAllTasksCommand(User? _user, Update update)
         {
+
             if (_user == null)//если пользователь не зарегистрирован
             {
                 _telegramBotClient.SendMessage(update.Message.Chat, "для начала работы введите /start");
@@ -142,11 +144,7 @@ namespace Bot
                 _telegramBotClient.SendMessage(update.Message.Chat, "для начала работы введите /start");
                 return;
             }
-            if(_text.Length == 1 || _text[1] == "") throw new IncorrectTaskException();//проверяем, что задача не пустая строка
-            if (!_todoService.IsNameNotRepeats(_text[1], _user.UserId)) throw new DuplicateTaskException(_text[1]); // проверяем задачу на дубликат для этого пользователя
-            if (_text[1].Length > TaskLimit) throw new TaskLengthLimitException(_text[1].Length, TaskLimit); //проверяем, что длина задачи не превышает допустимое значение TaskLimit 
-            ValidateString(_text[1]);
-            ToDoItem toDoItem = _todoService.Add(_user, _text[1]);
+            ToDoItem toDoItem = _todoService.Add(_user, _text);
             _telegramBotClient.SendMessage(update.Message.Chat, $"Задача \"{toDoItem.Name}\" добавлена, GuidId: {toDoItem.Id}");
         }
         
@@ -179,7 +177,7 @@ namespace Bot
             throw new ArgumentException();
         }
 
-        //проверяет, что строка не равна null, не равна пустой строке и имеет какие-то символы кроме проблема
+        //проверяет, что строка не равна null, не равна пустой строке и имеет какие-то символы кроме пробела
         public static void ValidateString(string? str)
         {
             if (String.IsNullOrEmpty(str))//проверяем, что строка не ноль не пустая
@@ -239,5 +237,7 @@ namespace Bot
             
             return false;
         }
+
+        //проверка, что пользователь зарегистрирован
     }
 }
