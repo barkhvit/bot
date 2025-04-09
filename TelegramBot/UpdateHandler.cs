@@ -5,11 +5,14 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
+using Bot.Core.Entities;
+using Bot.Core.Exceptions;
+using Bot.Core.Services;
 using Otus.ToDoList.ConsoleBot;
 using Otus.ToDoList.ConsoleBot.Types;
 using static System.Net.Mime.MediaTypeNames;
 
-namespace Bot
+namespace Bot.TelegramBot
 {
     public class UpdateHandler : IUpdateHandler
     {
@@ -33,16 +36,16 @@ namespace Bot
         public void HandleUpdateAsync(ITelegramBotClient botClient, Update update)
         {
             string[] _text = update.Message.Text.Split(' ',2); //сообщение от пользователя помещаем в двумерный массив
-            User? _user = _userService.GetUser(update.Message.From.Id);//присваиваем пользователя локальной переменной
+            ToDoUser? _user = _userService.GetUser(update.Message.From.Id);//присваиваем пользователя локальной переменной
             //ToDoService todoService = (ToDoService)_todoService;
 
             try
             {
-                if (_text.Length == 0)
-                {
-                    WrongInput(botClient, update);
-                    return;
-                }
+                if (_text.Length == 0) throw new IncorrectInputException();
+                //{
+                //    WrongInput(botClient, update);
+                //    return;
+                //}
                 //обработка команды от пользователя
                 switch (_text[0])
                 {
@@ -56,7 +59,7 @@ namespace Bot
                     case "/removetask": RemoveTaskCommand(_user, update, _text); break;
                     case "/showusers": break;
                     case "/exit": return;
-                    default: WrongInput(botClient,update); break;
+                    default: throw new IncorrectInputException(); 
                 }
             }
             catch (ArgumentException) //некорректный аргумент при вводе кол-ва задач и символов в задаче или задача == null
@@ -83,17 +86,22 @@ namespace Bot
             {
                 botClient.SendMessage(update.Message.Chat, $"{e.Message}");
             }
+            catch (UserIsNotRegistratedException)
+            {
+                botClient.SendMessage(update.Message.Chat, $"для начала работы введите /start");
+            }
+            catch (IncorrectInputException)
+            {
+                botClient.SendMessage(update.Message.Chat, $"Некорректный ввод команды");
+            }
         }
+        //================================================================================================
 
         //показать все задачи (активные и завершенные для пользователя)
-        private void ShowAllTasksCommand(User? _user, Update update)
+        private void ShowAllTasksCommand(ToDoUser? _user, Update update)
         {
 
-            if (_user == null)//если пользователь не зарегистрирован
-            {
-                _telegramBotClient.SendMessage(update.Message.Chat, "для начала работы введите /start");
-                return;
-            }
+            if (_user == null) throw new UserIsNotRegistratedException();//если пользователь не зарегистрирован
             string str = "Задач нет";
             string str2 = "";
             var toDoItems = _todoService.GetAllByUserId(_user.UserId);
@@ -109,7 +117,7 @@ namespace Bot
             _telegramBotClient.SendMessage(update.Message.Chat, str);
         }
 
-        private void StartCommand(User? _user, Update update) //команда старт
+        private void StartCommand(ToDoUser? _user, Update update) //команда старт
         {
             // регистрируем пользователя
             _user = _userService.RegisterUser(update.Message.From.Id, update.Message.From.Username);
@@ -117,13 +125,9 @@ namespace Bot
         }
         
 
-        private void ShowTasksCommand(User? _user, Update update)
+        private void ShowTasksCommand(ToDoUser? _user, Update update)//ВЫВОДИТ активные задачи для пользователя
         {
-            if (_user == null)//если пользователь не зарегистрирован
-            {
-                _telegramBotClient.SendMessage(update.Message.Chat, "для начала работы введите /start");
-                return;
-            }
+            if (_user == null) throw new UserIsNotRegistratedException();//если пользователь не зарегистрирован
             string str = "Активных задач нет";
             var toDoItems = _todoService.GetActiveByUserId(_user.UserId);
             if (toDoItems.Count != 0)
@@ -137,18 +141,13 @@ namespace Bot
             _telegramBotClient.SendMessage(update.Message.Chat, str);
         }
 
-        private void AddTaskCommand(User? _user, Update update, string[] _text)//ДОБАВИТЬ задачу
+        private void AddTaskCommand(ToDoUser? _user, Update update, string[] _text)//ДОБАВИТЬ задачу
         {
-            if (_user == null)//если пользователь не зарегистрирован
-            {
-                _telegramBotClient.SendMessage(update.Message.Chat, "для начала работы введите /start");
-                return;
-            }
             ToDoItem toDoItem = _todoService.Add(_user, _text);
             _telegramBotClient.SendMessage(update.Message.Chat, $"Задача \"{toDoItem.Name}\" добавлена, GuidId: {toDoItem.Id}");
         }
         
-        private void ComandHelp(User? _user, Update update)//команда help
+        private void ComandHelp(ToDoUser? _user, Update update)//команда help
         {
             string str = "Для начала работы введите команду /start";
             if (_user != null)
@@ -158,12 +157,6 @@ namespace Bot
                     " \n /showtasks - показать активные задачи" +
                     " \n /showalltasks - показать все задачи";
             _telegramBotClient.SendMessage(update.Message.Chat, str);
-        }
-
-        //некорректный ввод команды
-        private void WrongInput(ITelegramBotClient botClient,Update update)
-        {
-            botClient.SendMessage(update.Message.Chat, "Некорректный ввод команды");
         }
 
         //приводит строку к int и проверяет, что оно находится в диапазоне min и max
@@ -180,7 +173,7 @@ namespace Bot
         //проверяет, что строка не равна null, не равна пустой строке и имеет какие-то символы кроме пробела
         public static void ValidateString(string? str)
         {
-            if (String.IsNullOrEmpty(str))//проверяем, что строка не ноль не пустая
+            if (string.IsNullOrEmpty(str))//проверяем, что строка не ноль не пустая
                 throw new ArgumentException();
 
             int i = str.Replace(" ", "").Length;
@@ -188,13 +181,9 @@ namespace Bot
         }
 
         //УДАЛИТЬ задачу
-        private void RemoveTaskCommand(User? user, Update update, string[] _text)
+        private void RemoveTaskCommand(ToDoUser? user, Update update, string[] _text)
         {
-            if (user == null)//если пользователь не зарегистрирован
-            {
-                _telegramBotClient.SendMessage(update.Message.Chat, "для начала работы введите /start");
-                return;
-            }
+            if (user == null) throw new UserIsNotRegistratedException();//если пользователь не зарегистрирован
             if (_text.Length == 1 || _text[1] == "") throw new IncorrectRemoveTaskException();
             ValidateString(_text[1]);
 
@@ -209,35 +198,21 @@ namespace Bot
         }
 
         //переводит задачу в статус ВЫПОЛНЕНО
-        private void CompleteTaskCommand(User? user, Update update, string[] _text) 
+        private void CompleteTaskCommand(ToDoUser? user, Update update, string[] _text) 
         {
-            if (user == null)//если пользователь не зарегистрирован
-            {
-                _telegramBotClient.SendMessage(update.Message.Chat, "для начала работы введите /start");
-                return;
-            }
+            if (user == null) throw new UserIsNotRegistratedException();//если пользователь не зарегистрирован
             if (_text.Length == 1 || _text[1] == "") throw new IncorrectRemoveTaskException();
             ValidateString(_text[1]);
 
-            if (Guid.TryParse(_text[1], out var guid) && TaskIsInList(guid))//проверяем корректность GUID и есть ли задача с таким GUID
+            if (Guid.TryParse(_text[1], out var guid))//проверяем корректность GUID
             {
                 _todoService.MarkCompleted(guid, out bool isComplete);
                 if(isComplete) _telegramBotClient.SendMessage(update.Message.Chat, $"Задача GuidId: \"{_text[1]}\" выполнена ");
                 else _telegramBotClient.SendMessage(update.Message.Chat, $"Задачи с GuidId \"{_text[1]}\" нет ");
             }
             else
-                _telegramBotClient.SendMessage(update.Message.Chat, $"Задачи с GuidId \"{_text[1]}\" нет ");
+                _telegramBotClient.SendMessage(update.Message.Chat, $"Guid задачи введен некорректно");
         }
 
-        //проверка по Guid есть такая задача или нет
-        public bool TaskIsInList(Guid guid2)
-        {
-            foreach (ToDoItem toDoItem in _todoService.GetToDoItems())
-                if (toDoItem.Id == guid2) return true;
-            
-            return false;
-        }
-
-        //проверка, что пользователь зарегистрирован
     }
 }

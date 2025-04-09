@@ -4,11 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Bot
+namespace Bot.Core.Exceptions
 {
-    public enum ToDoItemState
+    public class UserIsNotRegistratedException : Exception
     {
-        Active,
-        Completed
+
     }
 }

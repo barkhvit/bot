@@ -2,6 +2,8 @@
 using static System.Net.Mime.MediaTypeNames;
 using Otus.ToDoList.ConsoleBot;
 using System.Threading.Channels;
+using Bot.Core.Services;
+using Bot.TelegramBot;
 
 namespace Bot
 {

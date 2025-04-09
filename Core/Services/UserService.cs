@@ -1,20 +1,21 @@
-﻿using System;
+﻿using Bot.Core.Entities;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Bot
+namespace Bot.Core.Services
 {
     public class UserService : IUserService
     {
         //хранилище с пользователями
-        List<User> _users = new();
+        List<ToDoUser> _users = new();
 
         //возвращает null если пользователя нет в хранилище
-        public User? GetUser(long telegramUserId)
+        public ToDoUser? GetUser(long telegramUserId)
         {
-            foreach(User u in _users)
+            foreach(ToDoUser u in _users)
             {
                 if (u.TelegramUserId == telegramUserId)
                     return u;
@@ -23,13 +24,13 @@ namespace Bot
         }
 
         //регистрация пользователя
-        public User RegisterUser(long telegramUserId, string telegramUserName)
+        public ToDoUser RegisterUser(long telegramUserId, string telegramUserName)
         {
             //проверяем зарегистрирован пользователь или нет? Возвращаем пользователя из Хранилища, если зарегистрирован
             if (GetUser(telegramUserId) == null)
             {
                 //Если не зарегистрирован, то создаем нового, добавляем в Хранилище и возвращаем его
-                User user = new User()
+                ToDoUser user = new ToDoUser()
                 {
                     UserId = Guid.NewGuid(),
                     TelegramUserId = telegramUserId,

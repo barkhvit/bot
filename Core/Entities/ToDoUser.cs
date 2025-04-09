@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Bot
+namespace Bot.Core.Entities
 {
-    public class User
+    public class ToDoUser
     {
         public Guid UserId { get; set; }
         public long TelegramUserId { get; set; }

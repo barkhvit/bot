@@ -1,5 +1,4 @@
-﻿
-namespace Bot
+﻿namespace Bot.Core.Exceptions
 {
     internal class IncorrectRemoveTaskException : Exception
     {

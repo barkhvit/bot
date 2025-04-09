@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Bot
+namespace Bot.Core.Exceptions
 {
     class IncorrectTaskException : Exception
     {

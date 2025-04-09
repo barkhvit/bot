@@ -1,11 +1,14 @@
-﻿using Otus.ToDoList.ConsoleBot.Types;
+﻿using Bot.Core.Entities;
+using Bot.Core.Exceptions;
+using Otus.ToDoList.ConsoleBot;
+using Otus.ToDoList.ConsoleBot.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Bot
+namespace Bot.Core.Services
 {
     public class ToDoService : IToDoService
     {
@@ -20,8 +23,9 @@ namespace Bot
         }
 
         //добавляет задачу и возвращает ее
-        public ToDoItem Add(User user, string[] text)
+        public ToDoItem Add(ToDoUser user, string[] text)
         {
+            if (user == null) throw new UserIsNotRegistratedException();//если пользователь не зарегистрирован
             if (text.Length == 1 || text[1] == "") throw new IncorrectTaskException();//проверяем, что задача не пустая строка
             if (!IsNameNotRepeats(text[1], user.UserId)) throw new DuplicateTaskException(text[1]); // проверяем задачу на дубликат для этого пользователя
             if (text[1].Length > TaskLimit) throw new TaskLengthLimitException(text[1].Length, TaskLimit); //проверяем, что длина задачи не превышает допустимое значение TaskLimit
@@ -49,17 +53,13 @@ namespace Bot
             }      
         }
 
-        //возвращает список задач по UserId, только со статусом Active
+        //возвращает список задач по UserId, только со статусом Active(LINQ)
         public IReadOnlyList<ToDoItem> GetActiveByUserId(Guid userId)
         {
-            List<ToDoItem> toDoItemsActive = new List<ToDoItem>();
-            foreach(ToDoItem toDoItem in _toDoItems)
-            {
-                if(toDoItem.User.UserId == userId && toDoItem.State == ToDoItemState.Active)
-                    toDoItemsActive.Add(toDoItem);
-            }
-            return toDoItemsActive;
+            return _toDoItems.Where(item => item.User.UserId == userId && item.State == ToDoItemState.Active).ToList();
         }
+            
+         
 
         //переводит статус задачи в исполнено
         public void MarkCompleted(Guid id, out bool isComplete)
@@ -88,16 +88,10 @@ namespace Bot
             return answer;
         }
 
-        //возвращает все задачи для пользователя
+        //возвращает все задачи для пользователя(LINQ)
         public IReadOnlyList<ToDoItem> GetAllByUserId(Guid userId)
         {
-            List<ToDoItem> toDoItemsActive = new List<ToDoItem>();
-            foreach (ToDoItem toDoItem in _toDoItems)
-            {
-                if (toDoItem.User.UserId == userId)
-                    toDoItemsActive.Add(toDoItem);
-            }
-            return toDoItemsActive;
+            return _toDoItems.Where(item => item.User.UserId == userId).ToList();
         }
     }
 }
