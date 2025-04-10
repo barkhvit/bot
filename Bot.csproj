@@ -7,4 +7,17 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Compile Remove="Otus.ToDoList.ConsoleBot\**" />
+    <Compile Remove="Новая папка\**" />
+    <EmbeddedResource Remove="Otus.ToDoList.ConsoleBot\**" />
+    <EmbeddedResource Remove="Новая папка\**" />
+    <None Remove="Otus.ToDoList.ConsoleBot\**" />
+    <None Remove="Новая папка\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="Otus.ToDoList.ConsoleBot\Otus.ToDoList.ConsoleBot.csproj" />
+  </ItemGroup>
+
 </Project>
