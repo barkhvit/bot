@@ -1,10 +1,11 @@
 ﻿namespace Bot.Core.Exceptions
 {
-    internal class IncorrectRemoveTaskException : Exception
+    internal class IncorrectArgumentTaskException : Exception
     {
-        public IncorrectRemoveTaskException() : base("После команд /removetask и /completetask необходимо через пробел ввести GuidId задачи")
+        public string Type { get; private set; }
+        public IncorrectArgumentTaskException(string str)
         {
+            Type = str;
         }
-
     }
 }

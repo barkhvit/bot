@@ -20,12 +20,8 @@ namespace Bot.TelegramBot
         private readonly IUserService _userService;
         private readonly IToDoService _todoService;
         private readonly IToDoReportService _toDoReportService;
-
-        private readonly string CommandsForRegUser = "\n /info \n /help \n /addtask \n /removetask \n /completetask \n /showtasks \n /showalltasks";//список команд для зарегистрированного пользователя
-        private readonly string CommandsForNotRegUser = "\n /start - начать\n /info - о программе \n /help - помощь";//список команд для незарегистрированного пользователя
-        private readonly int TaskLimit = 30;//лимит по длине задачи
-        private readonly int ToDoItemsLimit = 5; //лимит по кол-ву задач на пользователя
-
+        private readonly string CommandsForRegUser = "\n /info \n /help \n /addtask \n /removetask \n /completetask \n /showtasks \n /showalltasks \n /find";//список команд для зарегистрированного пользователя
+        
         //КОНСТРУКТОР
         public UpdateHandler(ITelegramBotClient telegramBotClient, IUserService userService, IToDoService todoService, IToDoReportService toDoReportService)
         {   
@@ -76,9 +72,16 @@ namespace Bot.TelegramBot
             {
                 botClient.SendMessage(update.Message.Chat, $"{e.Message}");
             }
-            catch (IncorrectRemoveTaskException e)//некорректно введен аргумент для команды /removetask
+            catch (IncorrectArgumentTaskException e)//некорректно введен аргумент для команды /removetask
             {
-                botClient.SendMessage(update.Message.Chat, $"{e.Message}");
+                string message = "";
+                switch (e.Type)
+                {
+                    case "/find": message = "строку для поиска";break;
+                    case "/completetask": message = "GuidId задачи"; break;
+                    case "/removetask": message = "GuidId задачи"; break;
+                }
+                botClient.SendMessage(update.Message.Chat, $"Ошибка ввода. После команды {e.Type} через пробел необходимо ввести {message}.");
             }
             catch (DuplicateTaskException e)//если дубликат задачи
             {
@@ -102,13 +105,14 @@ namespace Bot.TelegramBot
             }
         }
 
-
         //================================================================================================
 
         //поиск задачи 
         private void FindCommand(ToDoUser? user, Update update, string[] text)
         {
             if (user == null) throw new UserIsNotRegistratedException();//если пользователь не зарегистрирован
+            if (text.Length == 1 || text[1] == "") throw new IncorrectArgumentTaskException("/find");
+            ValidateString(text[1]);
             var itemsResult = _todoService.Find(user, text[1]);
             string str = "Таких задач нет";
             if (itemsResult.Count != 0)
@@ -181,7 +185,8 @@ namespace Bot.TelegramBot
                     "\n /removetask Id - удалить задачу" +
                     " \n /completetask Id - завершить задачу" +
                     " \n /showtasks - показать активные задачи" +
-                    " \n /showalltasks - показать все задачи";
+                    " \n /showalltasks - показать все задачи" +
+                    " \n /find + начало задачи - поиск задач по началу";
             _telegramBotClient.SendMessage(update.Message.Chat, str);
         }
 
@@ -210,7 +215,7 @@ namespace Bot.TelegramBot
         private void RemoveTaskCommand(ToDoUser? user, Update update, string[] _text)
         {
             if (user == null) throw new UserIsNotRegistratedException();//если пользователь не зарегистрирован
-            if (_text.Length == 1 || _text[1] == "") throw new IncorrectRemoveTaskException();
+            if (_text.Length == 1 || _text[1] == "") throw new IncorrectArgumentTaskException("/removetask");
             ValidateString(_text[1]);
 
             if (Guid.TryParse(_text[1], out var guid))//проверяем корректность GUID и есть ли задача с таким GUID
@@ -226,7 +231,7 @@ namespace Bot.TelegramBot
         private void CompleteTaskCommand(ToDoUser? user, Update update, string[] _text) 
         {
             if (user == null) throw new UserIsNotRegistratedException();//если пользователь не зарегистрирован
-            if (_text.Length == 1 || _text[1] == "") throw new IncorrectRemoveTaskException();
+            if (_text.Length == 1 || _text[1] == "") throw new IncorrectArgumentTaskException("/completetask");
             ValidateString(_text[1]);
 
             if (Guid.TryParse(_text[1], out var guid))//проверяем корректность GUID
