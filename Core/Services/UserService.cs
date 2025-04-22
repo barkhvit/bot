@@ -1,4 +1,5 @@
-﻿using Bot.Core.Entities;
+﻿using Bot.Core.DataAccess;
+using Bot.Core.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,17 +11,19 @@ namespace Bot.Core.Services
     public class UserService : IUserService
     {
         //хранилище с пользователями
-        List<ToDoUser> _users = new();
+        private readonly IUserRepository _userRepository;
+
+        //КОНСТРУКТОР
+        public UserService(IUserRepository userRepository)
+        {
+            _userRepository = userRepository;
+        }
+
 
         //возвращает null если пользователя нет в хранилище
         public ToDoUser? GetUser(long telegramUserId)
         {
-            foreach(ToDoUser u in _users)
-            {
-                if (u.TelegramUserId == telegramUserId)
-                    return u;
-            }
-            return null;
+            return _userRepository.GetUserByTelegramUserId(telegramUserId);
         }
 
         //регистрация пользователя
@@ -33,11 +36,11 @@ namespace Bot.Core.Services
                 ToDoUser user = new ToDoUser()
                 {
                     UserId = Guid.NewGuid(),
-                    TelegramUserId = telegramUserId,
+                    telegramUserId = telegramUserId,
                     TelegramUserName = telegramUserName,
                     RegisteredAt = DateTime.UtcNow
                 };
-                _users.Add(user);
+                _userRepository.Add(user);
                 return user;
             }
             else
