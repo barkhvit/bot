@@ -27,13 +27,29 @@ namespace Bot
             //обработчик
             var updateHandler = new UpdateHandler(botClient, userService, toDoService, reportService);//обработчик команд
 
+            //методы событий начала и окончания обработки
+            updateHandler.OnHandleUpdateStarted += text => Console.WriteLine($"Началась обработка сообщения:'{text}'");
+            updateHandler.OnHandleUpdateCompleted += text => Console.WriteLine($"Закончилась обработка сообщения:'{text}'");
+
+            //CancellationToken
+            var _cts = new CancellationTokenSource().Token;
+
             try
             {
-                botClient.StartReceiving(updateHandler);
+                botClient.StartReceiving(updateHandler, _cts);
             }
             catch (Exception e)
             {
                 Console.WriteLine($"\nПроизошла непредвиденная ошибка: \n{e.GetType}\n{e.Message}\n{e.InnerException}\n{e.StackTrace}");
+            }
+            finally
+            {
+                if (updateHandler != null)
+                {
+                    //отписка
+                    updateHandler.OnHandleUpdateStarted -= text => Console.WriteLine($"Началась обработка сообщения:'{text}'");
+                    updateHandler.OnHandleUpdateCompleted -= text => Console.WriteLine($"Закончилась обработка сообщения:'{text}'");
+                }
             }
         }
     }

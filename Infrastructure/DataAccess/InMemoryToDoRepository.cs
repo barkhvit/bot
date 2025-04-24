@@ -13,25 +13,25 @@ namespace Bot.Infrastructure.DataAccess
         private readonly List<ToDoItem> _toDoItems = new();
 
         //возвращает активные задачи для пользователя
-        public IReadOnlyList<ToDoItem> GetActiveByUserId(Guid userId)
+        public async Task<IReadOnlyList<ToDoItem>> GetActiveByUserId(Guid userId, CancellationToken cancellationToken)
         {
             return _toDoItems.Where(i => i.User.UserId == userId && i.State == ToDoItemState.Active).ToList();
         }
 
         //возвращает все задачи для пользователя
-        public IReadOnlyList<ToDoItem> GetAllByUserId(Guid userId)
+        public async Task<IReadOnlyList<ToDoItem>> GetAllByUserId(Guid userId, CancellationToken cancellationToken)
         {
             return _toDoItems.Where(i => i.User.UserId == userId).ToList();
         }
 
         //добавить задач
-        public void Add(ToDoItem item)
+        public async Task Add(ToDoItem item, CancellationToken cancellationToken)
         {
             _toDoItems.Add(item);
         }
 
         //обновить задачу, найти по id и заменить на новую
-        public void Update(ToDoItem item)
+        public async Task Update(ToDoItem item, CancellationToken cancellationToken)
         {
             var result = _toDoItems.FirstOrDefault(i => i.Id == item.Id);
             if(result != null)
@@ -42,13 +42,14 @@ namespace Bot.Infrastructure.DataAccess
         }
 
         //кол-во активных задач
-        public int CountActive(Guid userId)
+        public async Task<int> CountActive(Guid userId, CancellationToken cancellationToken)
         {
-            return GetActiveByUserId(userId).Count;
+            var result = await GetActiveByUserId(userId, cancellationToken);
+            return result.Count;
         }
 
         //удаляет задачу по id
-        public void Delete(Guid id)
+        public async Task Delete(Guid id, CancellationToken cancellationToken)
         {
             var item = _toDoItems.FirstOrDefault(i => i.Id == id);
             if (item != null)
@@ -56,16 +57,19 @@ namespace Bot.Infrastructure.DataAccess
         }
 
         //проверяет есть такая задача или нет
-        public bool ExistsByName(Guid userId, string name)
+        public async Task<bool> ExistsByName(Guid userId, string name, CancellationToken cancellationToken)
         {
             var item = _toDoItems.Where(i => i.User.UserId == userId && i.Name == name);
             return item != null;
         }
 
         //поиск по какому-то условию
-        public IReadOnlyList<ToDoItem> Find(Guid userId, Func<ToDoItem, bool> predicate)
+        public async Task<IReadOnlyList<ToDoItem>> Find(Guid userId, Func<ToDoItem, bool> predicate, CancellationToken cancellationToken)
         {
-            return GetAllByUserId(userId).Where(predicate).ToList();
+            var result = await GetAllByUserId(userId, cancellationToken);
+            return result.Where(predicate).ToList();
+
+
         }
     }
 }
