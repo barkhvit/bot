@@ -1,8 +1,6 @@
 ﻿using Bot.Core.DataAccess;
 using Bot.Core.Entities;
 using Bot.Core.Exceptions;
-using Otus.ToDoList.ConsoleBot;
-using Otus.ToDoList.ConsoleBot.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;

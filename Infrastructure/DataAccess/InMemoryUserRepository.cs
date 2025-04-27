@@ -1,6 +1,5 @@
 ﻿using Bot.Core.DataAccess;
 using Bot.Core.Entities;
-using Otus.ToDoList.ConsoleBot.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
