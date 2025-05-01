@@ -16,13 +16,14 @@ namespace Bot.Core.Services
         {
             _toDoRepository = toDoRepository;
         }
-        public (int total, int completed, int active, DateTime generatedAt) GetUserStats(Guid userId)
+        public async Task<(int total, int completed, int active, DateTime generatedAt)> GetUserStats(Guid userId, CancellationToken cancellationToken)
         {
-            int Total = _toDoRepository.GetAllByUserId(userId).Count;
-            int Active = _toDoRepository.GetActiveByUserId(userId).Count;
-            int Completed = _toDoRepository.GetAllByUserId(userId).Count(t => t.State == Entities.ToDoItemState.Completed);
-            DateTime dateTime = DateTime.UtcNow;
-            return (Total, Completed, Active, dateTime);
+            var AllItems = await _toDoRepository.GetAllByUserId(userId, cancellationToken);
+
+            int Total = AllItems.Count;
+            int Active = AllItems.Count(i => i.State == Entities.ToDoItemState.Active);
+            int Completed = AllItems.Count(i => i.State == Entities.ToDoItemState.Completed);
+            return (Total, Completed, Active, DateTime.UtcNow);
         }
     }
 }

@@ -1,5 +1,4 @@
 ﻿using Bot.Core.Entities;
-using Otus.ToDoList.ConsoleBot.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,8 +9,8 @@ namespace Bot.Core.DataAccess
 {
     public interface IUserRepository
     {
-        ToDoUser? GetUser(Guid userId);
-        ToDoUser? GetUserByTelegramUserId(long telegramUserId);
-        void Add(ToDoUser user);
+        Task<ToDoUser?> GetUser(Guid userId, CancellationToken cancellationToken);
+        Task<ToDoUser?> GetUserByTelegramUserId(long telegramUserId, CancellationToken cancellationToken);
+        Task Add(ToDoUser user, CancellationToken cancellationToken);
     }
 }

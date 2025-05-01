@@ -1,8 +1,6 @@
 ﻿using Bot.Core.DataAccess;
 using Bot.Core.Entities;
 using Bot.Core.Exceptions;
-using Otus.ToDoList.ConsoleBot;
-using Otus.ToDoList.ConsoleBot.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,38 +23,37 @@ namespace Bot.Core.Services
 
 
         //добавляет задачу и возвращает ее
-        public ToDoItem Add(ToDoUser user, string[] text)
+        public async Task<ToDoItem> Add(ToDoUser user, string[] text, CancellationToken cancellationToken)
         {
             if (user == null) throw new UserIsNotRegistratedException();//если пользователь не зарегистрирован
             if (text.Length == 1 || text[1] == "") throw new IncorrectTaskException();//проверяем, что задача не пустая строка
-            if (!IsNameNotRepeats(text[1], user.UserId)) throw new DuplicateTaskException(text[1]); // проверяем задачу на дубликат для этого пользователя
+            if (!await IsNameNotRepeats(text[1], user.UserId, cancellationToken)) throw new DuplicateTaskException(text[1]); // проверяем задачу на дубликат для этого пользователя
             if (text[1].Length > TaskLimit) throw new TaskLengthLimitException(text[1].Length, TaskLimit); //проверяем, что длина задачи не превышает допустимое значение TaskLimit
             int i = text[1].Replace(" ", "").Length; if (i == 0) throw new IncorrectTaskException();//проверяем что строка не состоит только из пробелов
 
             ToDoItem toDoItem = new(user, text[1]);
-            _toDoRepository.Add(toDoItem);
+            await _toDoRepository.Add(toDoItem, cancellationToken);
             return toDoItem;
         }
 
         //удаление задачи по Id
-        public void Delete(Guid id)
+        public async Task Delete(Guid id, CancellationToken cancellationToken)
         {
-            _toDoRepository.Delete(id);      
+            await _toDoRepository.Delete(id, cancellationToken);      
         }
 
         //возвращает список задач по UserId, только со статусом Active(LINQ)
-        public IReadOnlyList<ToDoItem> GetActiveByUserId(Guid userId)
+        public async Task<IReadOnlyList<ToDoItem>> GetActiveByUserId(Guid userId, CancellationToken cancellationToken)
         {
-            return _toDoRepository.Find(userId, item => item.State == ToDoItemState.Active);
-            //return _toDoRepository.GetActiveByUserId(userId);
+            return await _toDoRepository.Find(userId, item => item.State == ToDoItemState.Active, cancellationToken);
         }
 
         
         //переводит статус задачи в исполнено
-        public void MarkCompleted(Guid id, Guid userId)
+        public async Task MarkCompleted(Guid id, Guid userId, CancellationToken cancellationToken)
         {
             bool isDelete = false;
-            var items = _toDoRepository.GetActiveByUserId(userId);
+            var items = await _toDoRepository.GetActiveByUserId(userId, cancellationToken);
             foreach (ToDoItem toDoItem in items)
             {
                 if (toDoItem.Id == id)
@@ -70,21 +67,21 @@ namespace Bot.Core.Services
         }
 
         //перебирает по именам активные задачи и проверяет есть такая задача или нет у данного пользователя
-        private bool IsNameNotRepeats(string name,Guid userId)
+        private async Task<bool> IsNameNotRepeats(string name,Guid userId, CancellationToken cancellationToken)
         {
-            return _toDoRepository.ExistsByName(userId, name);
+            return await _toDoRepository.ExistsByName(userId, name, cancellationToken);
         }
 
 
         //возвращает все задачи для пользователя
-        public IReadOnlyList<ToDoItem> GetAllByUserId(Guid userId)
+        public async Task<IReadOnlyList<ToDoItem>> GetAllByUserId(Guid userId, CancellationToken cancellationToken)
         {
-            return _toDoRepository.GetAllByUserId(userId);
+            return await _toDoRepository.GetAllByUserId(userId, cancellationToken);
         }
 
-        public IReadOnlyList<ToDoItem> Find(ToDoUser user, string namePrefix)
+        public async Task<IReadOnlyList<ToDoItem>> Find(ToDoUser user, string namePrefix, CancellationToken cancellationToken)
         {
-            return _toDoRepository.Find(user.UserId, item => item.Name.StartsWith(namePrefix));
+            return await _toDoRepository.Find(user.UserId, item => item.Name.StartsWith(namePrefix), cancellationToken);
         }
     }
 }

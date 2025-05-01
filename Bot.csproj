@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="Otus.ToDoList.ConsoleBot\Otus.ToDoList.ConsoleBot.csproj" />
+    <PackageReference Include="Telegram.Bot" Version="22.5.1" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,5 @@
 ﻿using Bot.Core.DataAccess;
 using Bot.Core.Entities;
-using Otus.ToDoList.ConsoleBot.Types;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,19 +11,20 @@ namespace Bot.Infrastructure.DataAccess
     class InMemoryUserRepository : IUserRepository
     {
         private List<ToDoUser> _toDoUsers = new List<ToDoUser>();
-        public void Add(ToDoUser user)
+        public async Task Add(ToDoUser user, CancellationToken cancellationToken)
         {
             _toDoUsers.Add(user);
+            await Task.CompletedTask;
         }
 
-        public ToDoUser? GetUser(Guid userId)
+        public async Task<ToDoUser?> GetUser(Guid userId, CancellationToken cancellationToken)
         {
-            return (ToDoUser?)_toDoUsers.FirstOrDefault(u => u.UserId == userId);
+            return _toDoUsers.FirstOrDefault(u => u.UserId == userId);
         }
 
-        public ToDoUser? GetUserByTelegramUserId(long telegramUserId)
+        public async Task<ToDoUser?> GetUserByTelegramUserId(long telegramUserId, CancellationToken cancellationToken)
         {
-            return (ToDoUser?)_toDoUsers.FirstOrDefault(u => u.telegramUserId == telegramUserId);
+            return _toDoUsers.FirstOrDefault(u => u.telegramUserId == telegramUserId);
         }
     }
 }

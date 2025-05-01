@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace Bot.Core.Services
@@ -21,16 +22,16 @@ namespace Bot.Core.Services
 
 
         //возвращает null если пользователя нет в хранилище
-        public ToDoUser? GetUser(long telegramUserId)
+        public async Task<ToDoUser?> GetUser(long telegramUserId, CancellationToken cancellationToken)
         {
-            return _userRepository.GetUserByTelegramUserId(telegramUserId);
+            return await _userRepository.GetUserByTelegramUserId(telegramUserId, cancellationToken);
         }
 
         //регистрация пользователя
-        public ToDoUser RegisterUser(long telegramUserId, string telegramUserName)
+        public async Task<ToDoUser> RegisterUser(long telegramUserId, string telegramUserName, CancellationToken cancellationToken)
         {
             //проверяем зарегистрирован пользователь или нет? Возвращаем пользователя из Хранилища, если зарегистрирован
-            if (GetUser(telegramUserId) == null)
+            if (await GetUser(telegramUserId, cancellationToken) == null)
             {
                 //Если не зарегистрирован, то создаем нового, добавляем в Хранилище и возвращаем его
                 ToDoUser user = new ToDoUser()
@@ -40,11 +41,11 @@ namespace Bot.Core.Services
                     TelegramUserName = telegramUserName,
                     RegisteredAt = DateTime.UtcNow
                 };
-                _userRepository.Add(user);
+                await _userRepository.Add(user, cancellationToken);
                 return user;
             }
             else
-                return GetUser(telegramUserId);
+                return await GetUser(telegramUserId, cancellationToken);
         }
     }
 }

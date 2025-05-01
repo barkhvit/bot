@@ -9,14 +9,11 @@ namespace Bot.Core.Services
 {
     public interface IToDoService
     {
-        IReadOnlyList<ToDoItem> GetActiveByUserId(Guid userId);//Возвращает список задач для UserId со статусом Active
-        ToDoItem Add(ToDoUser user, string[] name);//добавляет задачу
-        void MarkCompleted(Guid id, Guid userId);//делает задачу завершенной
-        void Delete(Guid id);//удаление задачи
-        //bool IsNameNotRepeats(string name, Guid userId);//перебирает по именам активные задачи и проверяет есть такая задача или нет у данного пользователя
-        //List<ToDoItem> GetToDoItems();//возвращает список задач
-        IReadOnlyList<ToDoItem> GetAllByUserId(Guid userId);//Возвращает все задачи для UserId
-
-        IReadOnlyList<ToDoItem> Find(ToDoUser user, string namePrefix);
+        Task<IReadOnlyList<ToDoItem>> GetActiveByUserId(Guid userId, CancellationToken cancellationToken);//Возвращает список задач для UserId со статусом Active
+        Task<ToDoItem> Add(ToDoUser user, string[] name, CancellationToken cancellationToken);//добавляет задачу
+        Task MarkCompleted(Guid id, Guid userId, CancellationToken cancellationToken);//делает задачу завершенной
+        Task Delete(Guid id, CancellationToken cancellationToken);//удаление задачи
+        Task<IReadOnlyList<ToDoItem>> GetAllByUserId(Guid userId, CancellationToken cancellationToken);//Возвращает все задачи для UserId
+        Task<IReadOnlyList<ToDoItem>> Find(ToDoUser user, string namePrefix, CancellationToken cancellationToken);
     }
 }
