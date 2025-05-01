@@ -11,6 +11,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace Bot
 {
+    //HR Bot
     internal class Program
     {
         static async Task Main(string[] args)
