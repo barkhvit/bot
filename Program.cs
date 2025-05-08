@@ -22,8 +22,8 @@ namespace Bot
             var botClient = new TelegramBotClient(Token);
 
             //репозитории
-            var userRepository = new InMemoryUserRepository();
-            var toDoRepository = new InMemoryToDoRepository();
+            var userRepository = new FileUserRepository("usersRepository");
+            var toDoRepository = new FileToDoRepository("toDoRepository");
 
             //сервисы
             var userService = new UserService(userRepository);//сервис по работе с пользователями
