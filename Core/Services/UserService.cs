@@ -31,21 +31,23 @@ namespace Bot.Core.Services
         public async Task<ToDoUser> RegisterUser(long telegramUserId, string telegramUserName, CancellationToken cancellationToken)
         {
             //проверяем зарегистрирован пользователь или нет? Возвращаем пользователя из Хранилища, если зарегистрирован
-            if (await GetUser(telegramUserId, cancellationToken) == null)
+            var user = await GetUser(telegramUserId, cancellationToken);
+
+            if (user == null)
             {
                 //Если не зарегистрирован, то создаем нового, добавляем в Хранилище и возвращаем его
-                ToDoUser user = new ToDoUser()
+                ToDoUser newUser = new ToDoUser()
                 {
                     UserId = Guid.NewGuid(),
                     telegramUserId = telegramUserId,
                     TelegramUserName = telegramUserName,
                     RegisteredAt = DateTime.UtcNow
                 };
-                await _userRepository.Add(user, cancellationToken);
-                return user;
+                await _userRepository.Add(newUser, cancellationToken);
+                return newUser;
             }
             else
-                return await GetUser(telegramUserId, cancellationToken);
+                return user;
         }
     }
 }

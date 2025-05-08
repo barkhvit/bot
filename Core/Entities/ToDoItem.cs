@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 
 namespace Bot.Core.Entities
@@ -15,6 +16,15 @@ namespace Bot.Core.Entities
         public ToDoItemState State { get; set; }
         public DateTime? StateChangedAt { get; set; }
 
+        [JsonConstructor]
+        public ToDoItem(Guid id, ToDoUser user, string name, DateTime createdAt, ToDoItemState state)
+        {
+            Id = id;
+            User = user;
+            Name = name;
+            CreatedAt = createdAt;
+            State = state;
+        }
         public ToDoItem(ToDoUser user,string name)
         {
             Id = Guid.NewGuid();
@@ -23,5 +33,6 @@ namespace Bot.Core.Entities
             CreatedAt = DateTime.UtcNow;
             State = ToDoItemState.Active;
         }
+
     }
 }

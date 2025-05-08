@@ -13,25 +13,28 @@ namespace Bot.Infrastructure.DataAccess
         private readonly List<ToDoItem> _toDoItems = new();
 
         //возвращает активные задачи для пользователя
-        public async Task<IReadOnlyList<ToDoItem>> GetActiveByUserId(Guid userId, CancellationToken cancellationToken)
+        public Task<IReadOnlyList<ToDoItem>> GetActiveByUserId(Guid userId, CancellationToken cancellationToken)
         {
-            return _toDoItems.Where(i => i.User.UserId == userId && i.State == ToDoItemState.Active).ToList();
+            var result = _toDoItems.Where(i => i.User.UserId == userId && i.State == ToDoItemState.Active).ToList();
+            return Task.FromResult<IReadOnlyList<ToDoItem>>(result);
         }
 
         //возвращает все задачи для пользователя
-        public async Task<IReadOnlyList<ToDoItem>> GetAllByUserId(Guid userId, CancellationToken cancellationToken)
+        public Task<IReadOnlyList<ToDoItem>> GetAllByUserId(Guid userId, CancellationToken cancellationToken)
         {
-            return _toDoItems.Where(i => i.User.UserId == userId).ToList();
+            var result = _toDoItems.Where(i => i.User.UserId == userId).ToList();
+            return Task.FromResult<IReadOnlyList<ToDoItem>>(result);
         }
 
         //добавить задач
-        public async Task Add(ToDoItem item, CancellationToken cancellationToken)
+        public Task Add(ToDoItem item, CancellationToken cancellationToken)
         {
             _toDoItems.Add(item);
+            return Task.CompletedTask;
         }
 
         //обновить задачу, найти по id и заменить на новую
-        public async Task Update(ToDoItem item, CancellationToken cancellationToken)
+        public Task Update(ToDoItem item, CancellationToken cancellationToken)
         {
             var result = _toDoItems.FirstOrDefault(i => i.Id == item.Id);
             if(result != null)
@@ -39,6 +42,7 @@ namespace Bot.Infrastructure.DataAccess
                 _toDoItems.Remove(result);
                 _toDoItems.Add(item);
             }
+            return Task.CompletedTask;
         }
 
         //кол-во активных задач
@@ -49,18 +53,19 @@ namespace Bot.Infrastructure.DataAccess
         }
 
         //удаляет задачу по id
-        public async Task Delete(Guid id, CancellationToken cancellationToken)
+        public Task Delete(Guid id, CancellationToken cancellationToken)
         {
             var item = _toDoItems.FirstOrDefault(i => i.Id == id);
             if (item != null)
                 _toDoItems.Remove(item);
+            return Task.CompletedTask;
         }
 
         //проверяет есть такая задача или нет
-        public async Task<bool> ExistsByName(Guid userId, string name, CancellationToken cancellationToken)
+        public Task<bool> ExistsByName(Guid userId, string name, CancellationToken cancellationToken)
         {
             var item = _toDoItems.Where(i => i.User.UserId == userId && i.Name == name);
-            return item != null;
+            return Task.FromResult(item != null);
         }
 
         //поиск по какому-то условию
@@ -68,8 +73,6 @@ namespace Bot.Infrastructure.DataAccess
         {
             var result = await GetAllByUserId(userId, cancellationToken);
             return result.Where(predicate).ToList();
-
-
         }
     }
 }

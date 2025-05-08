@@ -10,7 +10,7 @@ namespace Bot.Infrastructure.DataAccess
 {
     class InMemoryUserRepository : IUserRepository
     {
-        private List<ToDoUser> _toDoUsers = new List<ToDoUser>();
+        private readonly List<ToDoUser> _toDoUsers = new List<ToDoUser>();
         public async Task Add(ToDoUser user, CancellationToken cancellationToken)
         {
             _toDoUsers.Add(user);
@@ -19,12 +19,13 @@ namespace Bot.Infrastructure.DataAccess
 
         public async Task<ToDoUser?> GetUser(Guid userId, CancellationToken cancellationToken)
         {
-            return _toDoUsers.FirstOrDefault(u => u.UserId == userId);
+            var user = _toDoUsers.FirstOrDefault(u => u.UserId == userId);
+            return await Task.FromResult(user);
         }
 
         public async Task<ToDoUser?> GetUserByTelegramUserId(long telegramUserId, CancellationToken cancellationToken)
         {
-            return _toDoUsers.FirstOrDefault(u => u.telegramUserId == telegramUserId);
+            return await Task.FromResult(_toDoUsers.FirstOrDefault(u => u.telegramUserId == telegramUserId));
         }
     }
 }
