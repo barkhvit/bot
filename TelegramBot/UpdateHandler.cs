@@ -15,6 +15,8 @@ using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.ReplyMarkups;
 using Telegram.Bot.Types.Enums;
+using System.Collections;
+using Bot.TelegramBot.Scenarios;
 
 namespace Bot.TelegramBot
 {
@@ -26,20 +28,47 @@ namespace Bot.TelegramBot
         private readonly IToDoService _todoService;
         private readonly IToDoReportService _toDoReportService;
         private readonly string CommandsForRegUser = "\n /addtask \n /removetask \n /completetask \n /find";
+        private readonly IScenarioContextRepository _scenarioContextRepository;
+        private readonly IEnumerable<IScenario> _scenarios;
         //private readonly string CommandsForRegUser = "\n /info \n /help \n /addtask \n /removetask \n /completetask \n /showtasks \n /showalltasks \n /find";//список команд для зарегистрированного пользователя
 
+        
         //события 
         public event MessageEventHandler? OnHandleUpdateStarted;
         public event MessageEventHandler? OnHandleUpdateCompleted;
 
         //КОНСТРУКТОР
-        public UpdateHandler(ITelegramBotClient telegramBotClient, IUserService userService, IToDoService todoService, IToDoReportService toDoReportService)
+        public UpdateHandler(ITelegramBotClient telegramBotClient, IUserService userService, IToDoService todoService, IToDoReportService toDoReportService,
+            IEnumerable<IScenario> scenarios, IScenarioContextRepository contextRepository)
         {   
             _telegramBotClient = telegramBotClient;
             _userService = userService;
             _todoService = todoService;
             _toDoReportService = toDoReportService;
+            _scenarios = scenarios;
+            _scenarioContextRepository = contextRepository;
         }
+
+        private IScenario GetScenario(ScenarioType scenario)
+        {
+            var handler = _scenarios.FirstOrDefault(s => s.CanHandle(scenario));
+            return handler ?? throw new InvalidOperationException($"No scenario handler found for {scenario}");
+        }
+
+        private async Task ProcessScenario(ScenarioContext context, Update update, CancellationToken ct)
+        {
+            var scenario = GetScenario(context.CurrentScenario);
+            var result =await scenario.HandleMessageAsync(_telegramBotClient, context, update, ct);
+            if(result == ScenarioResult.Completed)
+            {
+                await _scenarioContextRepository.ResetContext(context.UserId, ct);
+            }
+            else
+            {
+                await _scenarioContextRepository.SetContext(context.UserId, context, ct);
+            }
+        }
+
 
         //Обработчик команд от пользователя 
         public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
@@ -49,6 +78,27 @@ namespace Bot.TelegramBot
 
             // Вызываем событие "Началась обработка"
             OnHandleUpdateStarted?.Invoke(update.Message.Text);
+
+            // Обработка команды /cancel до начала сценария
+            if (update.Message.Text == "/cancel")
+            {
+                await _scenarioContextRepository.ResetContext(update.Message.From.Id, cancellationToken);
+                await _telegramBotClient.SendMessage(
+                    update.Message.Chat.Id,
+                    "Текущее действие отменено.",
+                    replyMarkup: ReplyKeyboardService.GetAllCommandKeyboard(),
+                    cancellationToken: cancellationToken);
+                return;
+            }
+
+            // Проверка активного сценария
+            var context = await _scenarioContextRepository.GetContext(update.Message.From.Id, cancellationToken);
+            if (context != null)
+            {
+                await ProcessScenario(context, update, cancellationToken);
+                return;
+            }
+
 
             try
             {
@@ -204,8 +254,11 @@ namespace Bot.TelegramBot
 
         private async Task AddTaskCommand(ToDoUser? _user, Update update, string[] _text, CancellationToken cancellationToken)//ДОБАВИТЬ задачу
         {
-            ToDoItem toDoItem = await _todoService.Add(_user, _text, cancellationToken);
-            await _telegramBotClient.SendMessage(update.Message.Chat, $"Задача \"{toDoItem.Name}\" добавлена, GuidId: `{toDoItem.Id}`", cancellationToken: cancellationToken, parseMode: ParseMode.MarkdownV2);
+            var newContext = new ScenarioContext(update.Message.From.Id, ScenarioType.AddTask);
+            await _scenarioContextRepository.SetContext(update.Message.From.Id, newContext, cancellationToken);
+            await ProcessScenario(newContext, update, cancellationToken);
+            //ToDoItem toDoItem = await _todoService.Add(_user, _text, cancellationToken);
+            //await _telegramBotClient.SendMessage(update.Message.Chat, $"Задача \"{toDoItem.Name}\" добавлена, GuidId: `{toDoItem.Id}`", cancellationToken: cancellationToken, parseMode: ParseMode.MarkdownV2);
         }
         
         private async Task ComandHelp(ToDoUser? _user, Update update, CancellationToken cancellationToken)//команда help

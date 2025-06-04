@@ -36,6 +36,13 @@ namespace Bot.Core.Services
             return toDoItem;
         }
 
+        public async Task<ToDoItem> Add(ToDoUser user, string text, CancellationToken cancellationToken)
+        {
+            ToDoItem toDoItem = new(user, text);
+            await _toDoRepository.Add(toDoItem, cancellationToken);
+            return toDoItem;
+        }
+
         //удаление задачи по Id
         public async Task Delete(Guid id, CancellationToken cancellationToken)
         {

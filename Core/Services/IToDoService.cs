@@ -11,6 +11,7 @@ namespace Bot.Core.Services
     {
         Task<IReadOnlyList<ToDoItem>> GetActiveByUserId(Guid userId, CancellationToken cancellationToken);//Возвращает список задач для UserId со статусом Active
         Task<ToDoItem> Add(ToDoUser user, string[] name, CancellationToken cancellationToken);//добавляет задачу
+        Task<ToDoItem> Add(ToDoUser user, string text, CancellationToken cancellationToken);//добавляет задачу
         Task MarkCompleted(Guid id, Guid userId, CancellationToken cancellationToken);//делает задачу завершенной
         Task Delete(Guid id, CancellationToken cancellationToken);//удаление задачи
         Task<IReadOnlyList<ToDoItem>> GetAllByUserId(Guid userId, CancellationToken cancellationToken);//Возвращает все задачи для UserId

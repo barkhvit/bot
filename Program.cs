@@ -8,6 +8,7 @@ using Bot.Infrastructure.DataAccess;
 using Telegram.Bot;
 using System.Threading.Tasks;
 using Telegram.Bot.Types.ReplyMarkups;
+using Bot.TelegramBot.Scenarios;
 
 namespace Bot
 {
@@ -24,16 +25,22 @@ namespace Bot
             //репозитории
             var userRepository = new FileUserRepository("usersRepository");
             var toDoRepository = new FileToDoRepository("toDoRepository");
+            var contextRepository = new InMemoryScenarioContextRepository();
 
+            
             //сервисы
             var userService = new UserService(userRepository);//сервис по работе с пользователями
             var toDoService = new ToDoService(30, toDoRepository);//сервис по работе с листом заданий
             var reportService = new ToDoReportService(toDoRepository); // сервис по работе с отчетностью
 
+            //сценарии
+            var scenarios = new List<IScenario>
+            {
+                new AddTaskScenario(userService,toDoService)
+            };
+
             //обработчик
-            var updateHandler = new UpdateHandler(botClient, userService, toDoService, reportService);//обработчик команд
-
-
+            var updateHandler = new UpdateHandler(botClient, userService, toDoService, reportService, scenarios, contextRepository);//обработчик команд
 
             //методы событий начала и окончания обработки
             updateHandler.OnHandleUpdateStarted += text => Console.WriteLine($"Началась обработка сообщения:'{text}'");
