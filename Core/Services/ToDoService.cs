@@ -23,7 +23,7 @@ namespace Bot.Core.Services
 
 
         //добавляет задачу и возвращает ее
-        public async Task<ToDoItem> Add(ToDoUser user, string[] text, CancellationToken cancellationToken)
+        public async Task<ToDoItem> Add(ToDoUser user, string[] text, DateTime deadLine, CancellationToken cancellationToken)
         {
             if (user == null) throw new UserIsNotRegistratedException();//если пользователь не зарегистрирован
             if (text.Length == 1 || text[1] == "") throw new IncorrectTaskException();//проверяем, что задача не пустая строка
@@ -31,14 +31,14 @@ namespace Bot.Core.Services
             if (text[1].Length > TaskLimit) throw new TaskLengthLimitException(text[1].Length, TaskLimit); //проверяем, что длина задачи не превышает допустимое значение TaskLimit
             int i = text[1].Replace(" ", "").Length; if (i == 0) throw new IncorrectTaskException();//проверяем что строка не состоит только из пробелов
 
-            ToDoItem toDoItem = new(user, text[1]);
+            ToDoItem toDoItem = new(user, text[1], deadLine);
             await _toDoRepository.Add(toDoItem, cancellationToken);
             return toDoItem;
         }
 
-        public async Task<ToDoItem> Add(ToDoUser user, string text, CancellationToken cancellationToken)
+        public async Task<ToDoItem> Add(ToDoUser user, string text, DateTime deadLine, CancellationToken cancellationToken)
         {
-            ToDoItem toDoItem = new(user, text);
+            ToDoItem toDoItem = new(user, text,deadLine);
             await _toDoRepository.Add(toDoItem, cancellationToken);
             return toDoItem;
         }

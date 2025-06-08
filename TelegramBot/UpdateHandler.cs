@@ -52,7 +52,7 @@ namespace Bot.TelegramBot
         private IScenario GetScenario(ScenarioType scenario)
         {
             var handler = _scenarios.FirstOrDefault(s => s.CanHandle(scenario));
-            return handler ?? throw new InvalidOperationException($"No scenario handler found for {scenario}");
+            return handler ?? throw new InvalidOperationException($"Нет подходящего сценария для типа: {scenario}");
         }
 
         private async Task ProcessScenario(ScenarioContext context, Update update, CancellationToken ct)
@@ -91,7 +91,7 @@ namespace Bot.TelegramBot
                 return;
             }
 
-            // Проверка активного сценария
+            // Проверка активного сценария у пользователя
             var context = await _scenarioContextRepository.GetContext(update.Message.From.Id, cancellationToken);
             if (context != null)
             {
@@ -210,7 +210,7 @@ namespace Bot.TelegramBot
                 str = "Список задач:";
                 foreach(ToDoItem toDoItem in toDoItems)
                 {
-                    str2 = $"\n  ({toDoItem.State}) {toDoItem.Name} - {toDoItem.CreatedAt} - \\`{toDoItem.Id}\\`";
+                    str2 = $"\n  ({toDoItem.State}) {toDoItem.Name} - {toDoItem.CreatedAt} - \\`{toDoItem.Id}\\`- Deadline: {toDoItem.Deadline}";
                     str = str + str2;
                 }
             }
@@ -246,7 +246,7 @@ namespace Bot.TelegramBot
                 str = "Список активных задач:";
                 foreach(ToDoItem Item in toDoItems)
                 {
-                    str = str + $"\n{Item.Name} - {Item.CreatedAt} - \\`{Item.Id}\\`";
+                    str = str + $"\n{Item.Name} - {Item.CreatedAt} - \\`{Item.Id}\\` - Deadline: {Item.Deadline}";
                 }
             }
             await _telegramBotClient.SendMessage(update.Message.Chat, EscapeMarkdownV2(str), cancellationToken: cancellationToken, parseMode: ParseMode.MarkdownV2);

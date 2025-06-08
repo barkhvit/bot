@@ -55,7 +55,7 @@ namespace Bot.TelegramBot.Scenarios
                     {
                         var User = (ToDoUser)context.Data["User"];
                         var Name = (string)context.Data["Name"];
-                        await _toDoService.Add(User, Name, ct);
+                        await _toDoService.Add(User, Name, deadline, ct);
                         await bot.SendMessage(
                             chatId: update.Message.Chat.Id,
                             text: "Задача успешно добавлена!",
@@ -80,7 +80,7 @@ namespace Bot.TelegramBot.Scenarios
             return scenarioResult;
         }
 
-        private static ReplyKeyboardMarkup GetCancelKeyboard() => new(new[] { new KeyboardButton("/cancel") });
-        private static ReplyKeyboardMarkup GetDefaultKeyboard() => new(new[] { new KeyboardButton("/addtask"), new KeyboardButton("/showtask") });
+        private static ReplyKeyboardMarkup GetCancelKeyboard() => new(new[] { new KeyboardButton("/cancel") }) { ResizeKeyboard = true};
+        private static ReplyKeyboardMarkup GetDefaultKeyboard() => new(new[] { new KeyboardButton("/addtask"), new KeyboardButton("/showtasks") }) { ResizeKeyboard = true };
     }
 }
