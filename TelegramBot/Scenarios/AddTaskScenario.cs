@@ -1,5 +1,6 @@
 ﻿using Bot.Core.Entities;
 using Bot.Core.Services;
+using Bot.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -16,11 +17,12 @@ namespace Bot.TelegramBot.Scenarios
     {
         private readonly IUserService _userService;
         private readonly IToDoService _toDoService;
-        private readonly IScenarioContextRepository _scenarioContextRepository = new InMemoryScenarioContextRepository();
-        public AddTaskScenario(IUserService userService, IToDoService toDoService)
+        private readonly IScenarioContextRepository _scenarioContextRepository;
+        public AddTaskScenario(IUserService userService, IToDoService toDoService, IScenarioContextRepository scenarioContextRepository)
         {
             _userService = userService;
             _toDoService = toDoService;
+            _scenarioContextRepository = scenarioContextRepository;
         }
         public bool CanHandle(ScenarioType scenario) => scenario == ScenarioType.AddTask;
 
@@ -35,7 +37,7 @@ namespace Bot.TelegramBot.Scenarios
                     await bot.SendMessage(
                         chatId: update.Message.Chat.Id,
                         text: "Введите название задачи:",
-                        replyMarkup:GetCancelKeyboard(),
+                        replyMarkup: KeyBoards.GetCancelKeyboard(),
                         cancellationToken:ct);
                     context.CurrentStep = "Name";
                     scenarioResult = ScenarioResult.Transition; break;
@@ -46,7 +48,7 @@ namespace Bot.TelegramBot.Scenarios
                         chatId: update.Message.Chat.Id,
                         text: "Введите срок выполнения задачи в формате dd.MM.yyyy:",
                         cancellationToken: ct,
-                        replyMarkup: GetCancelKeyboard());
+                        replyMarkup: KeyBoards.GetCancelKeyboard());
                     context.CurrentStep = "DeadLine";
                     scenarioResult = ScenarioResult.Transition; break;
 
@@ -60,7 +62,7 @@ namespace Bot.TelegramBot.Scenarios
                             chatId: update.Message.Chat.Id,
                             text: "Задача успешно добавлена!",
                             cancellationToken:ct,
-                            replyMarkup:GetDefaultKeyboard());
+                            replyMarkup: KeyBoards.GetDefaultKeyboard());
                         scenarioResult = ScenarioResult.Completed;
                     }
                     else
@@ -68,7 +70,7 @@ namespace Bot.TelegramBot.Scenarios
                         await bot.SendMessage(
                             chatId: update.Message.Chat.Id,
                             text: "Неверный формат даты. Пожалуйста, введите дату в формате dd.MM.yyyy:",
-                            replyMarkup:GetCancelKeyboard(),
+                            replyMarkup: KeyBoards.GetCancelKeyboard(),
                             cancellationToken:ct);
                         scenarioResult = ScenarioResult.Transition;
                     }
@@ -80,7 +82,5 @@ namespace Bot.TelegramBot.Scenarios
             return scenarioResult;
         }
 
-        private static ReplyKeyboardMarkup GetCancelKeyboard() => new(new[] { new KeyboardButton("/cancel") }) { ResizeKeyboard = true};
-        private static ReplyKeyboardMarkup GetDefaultKeyboard() => new(new[] { new KeyboardButton("/addtask"), new KeyboardButton("/showtasks") }) { ResizeKeyboard = true };
     }
 }

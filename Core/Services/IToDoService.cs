@@ -10,7 +10,7 @@ namespace Bot.Core.Services
     public interface IToDoService
     {
         Task<IReadOnlyList<ToDoItem>> GetActiveByUserId(Guid userId, CancellationToken cancellationToken);//Возвращает список задач для UserId со статусом Active
-        Task<ToDoItem> Add(ToDoUser user, string[] name, DateTime deadLine, CancellationToken cancellationToken);//добавляет задачу
+        //Task<ToDoItem> Add(ToDoUser user, string[] name, DateTime deadLine, CancellationToken cancellationToken);//добавляет задачу
         Task<ToDoItem> Add(ToDoUser user, string text, DateTime deadLine, CancellationToken cancellationToken);//добавляет задачу
         Task MarkCompleted(Guid id, Guid userId, CancellationToken cancellationToken);//делает задачу завершенной
         Task Delete(Guid id, CancellationToken cancellationToken);//удаление задачи

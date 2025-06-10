@@ -8,8 +8,8 @@ namespace Bot.TelegramBot.Scenarios
 {
     public class ScenarioContext
     {
-        public long UserId { get; set; }
-        public ScenarioType CurrentScenario { get; set; }
+        public long UserId { get; }
+        public ScenarioType CurrentScenario { get;  }
         public string? CurrentStep { get; set; }
         public Dictionary<string, object> Data { get; set; } = new();
 

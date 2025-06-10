@@ -26,8 +26,9 @@ namespace Bot
             var userRepository = new FileUserRepository("usersRepository");
             var toDoRepository = new FileToDoRepository("toDoRepository");
             var contextRepository = new InMemoryScenarioContextRepository();
+            var scenarioContextRepository = new InMemoryScenarioContextRepository();
 
-            
+
             //сервисы
             var userService = new UserService(userRepository);//сервис по работе с пользователями
             var toDoService = new ToDoService(30, toDoRepository);//сервис по работе с листом заданий
@@ -36,7 +37,7 @@ namespace Bot
             //сценарии
             var scenarios = new List<IScenario>
             {
-                new AddTaskScenario(userService,toDoService)
+                new AddTaskScenario(userService,toDoService, scenarioContextRepository)
             };
 
             //обработчик
