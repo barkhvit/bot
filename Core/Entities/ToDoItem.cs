@@ -15,23 +15,26 @@ namespace Bot.Core.Entities
         public DateTime CreatedAt { get; private set; }
         public ToDoItemState State { get; set; }
         public DateTime? StateChangedAt { get; set; }
+        public DateTime Deadline { get; set; }
 
         [JsonConstructor]
-        public ToDoItem(Guid id, ToDoUser user, string name, DateTime createdAt, ToDoItemState state)
+        public ToDoItem(Guid id, ToDoUser user, string name, DateTime createdAt, ToDoItemState state, DateTime deadLine)
         {
             Id = id;
             User = user;
             Name = name;
             CreatedAt = createdAt;
             State = state;
+            Deadline = deadLine;
         }
-        public ToDoItem(ToDoUser user,string name)
+        public ToDoItem(ToDoUser user,string name, DateTime deadLine)
         {
             Id = Guid.NewGuid();
             User = user;
             Name = name;
             CreatedAt = DateTime.UtcNow;
             State = ToDoItemState.Active;
+            Deadline = deadLine;
         }
 
     }
