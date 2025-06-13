@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -8,7 +9,7 @@ namespace Bot.TelegramBot.Scenarios
 {
     public class InMemoryScenarioContextRepository : IScenarioContextRepository
     {
-        private readonly Dictionary<long, ScenarioContext> _contexts = new();
+        private readonly ConcurrentDictionary<long, ScenarioContext> _contexts = new();
         public Task<ScenarioContext?> GetContext(long userId, CancellationToken ct)
         {
             _contexts.TryGetValue(userId, out var context);
