@@ -11,7 +11,7 @@ namespace Bot.Core.Services
     {
         public static List<BotCommand> mainCommands = new List<BotCommand>()
         {
-            new(){Command = "showalltasks", Description = "показать все задачи" },
+            new(){Command = "show", Description = "показать все задачи" },
             new(){Command = "showtasks", Description = "показать активные задачи" },
             new(){Command = "report", Description = "отчет по задачам" },
             new(){Command = "info", Description = "информация о боте" },

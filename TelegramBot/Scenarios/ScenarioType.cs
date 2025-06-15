@@ -8,6 +8,6 @@ namespace Bot.TelegramBot.Scenarios
 {
     public enum ScenarioType
     {
-        None, AddTask
+        None, AddTask, AddList, DeleteList
     }
 }

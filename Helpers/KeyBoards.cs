@@ -10,6 +10,6 @@ namespace Bot.Helpers
     public static class KeyBoards
     {
         public static ReplyKeyboardMarkup GetCancelKeyboard() => new(new[] { new KeyboardButton("/cancel") }) { ResizeKeyboard = true };
-        public static ReplyKeyboardMarkup GetDefaultKeyboard() => new(new[] { new KeyboardButton("/addtask"), new KeyboardButton("/showtasks") }) { ResizeKeyboard = true };
+        public static ReplyKeyboardMarkup GetDefaultKeyboard() => new(new[] { new KeyboardButton("/addtask"), new KeyboardButton("/show") }) { ResizeKeyboard = true };
     }
 }

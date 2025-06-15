@@ -17,6 +17,7 @@ using Telegram.Bot.Types.ReplyMarkups;
 using Telegram.Bot.Types.Enums;
 using System.Collections;
 using Bot.TelegramBot.Scenarios;
+using Bot.TelegramBot.Dto;
 
 namespace Bot.TelegramBot
 {
@@ -30,16 +31,18 @@ namespace Bot.TelegramBot
         private readonly string CommandsForRegUser = "\n /addtask \n /removetask \n /completetask \n /find";
         private readonly IScenarioContextRepository _scenarioContextRepository;
         private readonly IEnumerable<IScenario> _scenarios;
+        private readonly IToDoListService _toDoListService;
+        private readonly CallBackUpdateHandler _callBackUpdateHandler;
         //private readonly string CommandsForRegUser = "\n /info \n /help \n /addtask \n /removetask \n /completetask \n /showtasks \n /showalltasks \n /find";//список команд для зарегистрированного пользователя
 
-        
+
         //события 
         public event MessageEventHandler? OnHandleUpdateStarted;
         public event MessageEventHandler? OnHandleUpdateCompleted;
 
         //КОНСТРУКТОР
         public UpdateHandler(ITelegramBotClient telegramBotClient, IUserService userService, IToDoService todoService, IToDoReportService toDoReportService,
-            IEnumerable<IScenario> scenarios, IScenarioContextRepository contextRepository)
+            IEnumerable<IScenario> scenarios, IScenarioContextRepository contextRepository, IToDoListService toDoListService)
         {   
             _telegramBotClient = telegramBotClient;
             _userService = userService;
@@ -47,6 +50,8 @@ namespace Bot.TelegramBot
             _toDoReportService = toDoReportService;
             _scenarios = scenarios;
             _scenarioContextRepository = contextRepository;
+            _toDoListService = toDoListService;
+            _callBackUpdateHandler = new CallBackUpdateHandler(telegramBotClient, userService, todoService, toDoReportService, scenarios, contextRepository, toDoListService);
         }
 
         private IScenario GetScenario(ScenarioType scenario)
@@ -58,7 +63,7 @@ namespace Bot.TelegramBot
         private async Task ProcessScenario(ScenarioContext context, Update update, CancellationToken ct)
         {
             var scenario = GetScenario(context.CurrentScenario);
-            var result =await scenario.HandleMessageAsync(_telegramBotClient, context, update, ct);
+            var result = await scenario.HandleMessageAsync(_telegramBotClient, context, update, ct);
             if(result == ScenarioResult.Completed)
             {
                 await _scenarioContextRepository.ResetContext(context.UserId, ct);
@@ -73,35 +78,57 @@ namespace Bot.TelegramBot
         //Обработчик команд от пользователя 
         public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
         {
-            string[] _text = update.Message.Text.Split(' ',2); //сообщение от пользователя помещаем в двумерный массив
-            ToDoUser? _user = await _userService.GetUser(update.Message.From.Id, cancellationToken);//присваиваем пользователя локальной переменной
+            // Получаем данные из update с помощью pattern matching
+            var (chatId, userId, messageId, Text) = update switch
+            {
+                { Type: UpdateType.Message, Message: var msg }
+                    => (msg.Chat.Id, msg.From.Id, msg.MessageId,msg.Text),
 
-            // Вызываем событие "Началась обработка"
-            OnHandleUpdateStarted?.Invoke(update.Message.Text);
+                { Type: UpdateType.CallbackQuery, CallbackQuery: var cbq }
+                    => (cbq.Message.Chat.Id, cbq.From.Id, cbq.Message.MessageId, cbq.Data),
+
+                _ => throw new InvalidOperationException("Неизвестный тип сообщения от пользователя")
+            };
+
+            string[] _text = Text.Split(' ',2); //сообщение от пользователя помещаем в двумерный массив
+            ToDoUser? _user = await _userService.GetUser(userId, cancellationToken);//присваиваем пользователя локальной переменной
 
             // Обработка команды /cancel до начала сценария
-            if (update.Message.Text == "/cancel")
+            if (Text == "/cancel" || Text == "cancel")
             {
-                await _scenarioContextRepository.ResetContext(update.Message.From.Id, cancellationToken);
+                await _scenarioContextRepository.ResetContext(userId, cancellationToken);
                 await _telegramBotClient.SendMessage(
-                    update.Message.Chat.Id,
+                    chatId,
                     "Текущее действие отменено.",
                     replyMarkup: ReplyKeyboardService.GetAllCommandKeyboard(),
                     cancellationToken: cancellationToken);
                 return;
             }
 
+
             // Проверка активного сценария у пользователя
-            var context = await _scenarioContextRepository.GetContext(update.Message.From.Id, cancellationToken);
+            var context = await _scenarioContextRepository.GetContext(userId, cancellationToken);
             if (context != null)
             {
                 await ProcessScenario(context, update, cancellationToken);
                 return;
             }
 
+            // Вызываем событие "Началась обработка"
+            OnHandleUpdateStarted?.Invoke(Text);
+
+            
 
             try
             {
+                //обработка CallBackQuery
+                if (update.Type == UpdateType.CallbackQuery)
+                {
+                    _callBackUpdateHandler.HandleUpdateAsync(_telegramBotClient, update, cancellationToken);
+                    return;
+                }
+                    
+
                 if (_text.Length == 0) throw new IncorrectInputException();
                 
                 //обработка команды от пользователя
@@ -111,8 +138,8 @@ namespace Bot.TelegramBot
                     case "/help": await ComandHelp(_user, update, cancellationToken); break;
                     case "/info": await botClient.SendMessage(update.Message.Chat, "| Версия программы: 2.0 | Дата создания: 30.03.2025 | Автор: Бархатов Виталий", cancellationToken: cancellationToken); ; break;
                     case "/addtask": await AddTaskCommand(_user, update, _text, cancellationToken);break;
-                    case "/showtasks": await ShowTasksCommand(_user, update, cancellationToken); break;
-                    case "/showalltasks": await ShowAllTasksCommandAsync(_user, update, cancellationToken); break;
+                    //case "/show": await ShowTasksCommand(_user, update, cancellationToken); break;
+                    case "/show": await ShowListsCommand(_user, update, cancellationToken); break;
                     case "/completetask": await CompleteTaskCommand(_user, update, _text, cancellationToken);break;
                     case "/removetask": await RemoveTaskCommand(_user, update, _text, cancellationToken); break;
                     case "/report": await ReportCommand(_user, update, _text, cancellationToken); break;
@@ -169,14 +196,33 @@ namespace Bot.TelegramBot
             {
                 await botClient.SendMessage(update.Message.Chat, $"Некорректный ввод команды", cancellationToken: cancellationToken);
             }
+            catch (AddTodoListException ex)
+            {
+                await botClient.SendMessage(update.Message.Chat, ex.Message, cancellationToken: cancellationToken);
+            }
             finally
             {
                 //событие "конец обработки"
-                OnHandleUpdateCompleted?.Invoke(update.Message.Text);
+                OnHandleUpdateCompleted?.Invoke(Text);
             }
         }
 
+
         //=====================================================================================================================================================
+
+        private async Task ShowListsCommand(ToDoUser? user, Update update, CancellationToken ct)
+        {
+            if(user == null) throw new UserIsNotRegistratedException();//если пользователь не зарегистрирован
+            var toDoLists = await _toDoListService.GetUserLists(user.UserId, ct);
+            InlineKeyboardMarkup inlineKeyboardMarkup = KeyBoards.KeyBoardForLists(toDoLists);
+            await _telegramBotClient.SendMessage(
+                chatId: update.Message.Chat.Id,
+                text: "Выберите список:",
+                cancellationToken:ct,
+                replyMarkup:inlineKeyboardMarkup);
+        }
+
+
 
         //поиск задачи 
         private async Task FindCommandAsync(ToDoUser? user, Update update, string[] text, CancellationToken cancellationToken)
@@ -197,26 +243,7 @@ namespace Bot.TelegramBot
             await _telegramBotClient.SendMessage(update.Message.Chat, str, cancellationToken: cancellationToken, parseMode: ParseMode.MarkdownV2);
         }
 
-        //показать все задачи (активные и завершенные для пользователя)
-        private async Task ShowAllTasksCommandAsync(ToDoUser? _user, Update update, CancellationToken cancellationToken)
-        {
-
-            if (_user == null) throw new UserIsNotRegistratedException();//если пользователь не зарегистрирован
-            string str = "Задач нет";
-            string str2 = "";
-            var toDoItems = await _todoService.GetAllByUserId(_user.UserId, cancellationToken);
-            if (toDoItems.Count != 0)
-            {
-                str = "Список задач:";
-                foreach(ToDoItem toDoItem in toDoItems)
-                {
-                    str2 = $"\n  ({toDoItem.State}) {toDoItem.Name} - {toDoItem.CreatedAt} - \\`{toDoItem.Id}\\`- Deadline: {toDoItem.Deadline}";
-                    str = str + str2;
-                }
-            }
-            await _telegramBotClient.SendMessage(update.Message.Chat, EscapeMarkdownV2(str), cancellationToken: cancellationToken, parseMode: ParseMode.MarkdownV2);
-        }
-
+        
         private async Task StartCommand(ToDoUser? _user, Update update, CancellationToken cancellationToken) //команда старт
         {
             // регистрируем пользователя
@@ -236,21 +263,7 @@ namespace Bot.TelegramBot
                 cancellationToken: cancellationToken);
         }
         
-        private async Task ShowTasksCommand(ToDoUser? _user, Update update, CancellationToken cancellationToken)//ВЫВОДИТ активные задачи для пользователя
-        {
-            if (_user == null) throw new UserIsNotRegistratedException();//если пользователь не зарегистрирован
-            var toDoItems = await _todoService.GetActiveByUserId(_user.UserId,cancellationToken);
-            string str = "Активных задач нет";
-            if (toDoItems.Count != 0)
-            {
-                str = "Список активных задач:";
-                foreach(ToDoItem Item in toDoItems)
-                {
-                    str = str + $"\n{Item.Name} - {Item.CreatedAt} - \\`{Item.Id}\\` - Deadline: {Item.Deadline}";
-                }
-            }
-            await _telegramBotClient.SendMessage(update.Message.Chat, EscapeMarkdownV2(str), cancellationToken: cancellationToken, parseMode: ParseMode.MarkdownV2);
-        }
+       
 
         private async Task AddTaskCommand(ToDoUser? _user, Update update, string[] _text, CancellationToken cancellationToken)//ДОБАВИТЬ задачу
         {
@@ -268,8 +281,7 @@ namespace Bot.TelegramBot
                 str = "Доступные команды:\n /addtask название задачи - добавить новую задачу" +
                     "\n /removetask Id - удалить задачу" +
                     " \n /completetask Id - завершить задачу" +
-                    " \n /showtasks - показать активные задачи" +
-                    " \n /showalltasks - показать все задачи" +
+                    " \n /show - показать активные задачи" +
                     " \n /find + начало задачи - поиск задач по началу" +
                     " \n /report - отчет по задачам";
             await _telegramBotClient.SendMessage(update.Message.Chat, str, cancellationToken: cancellationToken);

@@ -27,21 +27,24 @@ namespace Bot
             var toDoRepository = new FileToDoRepository("toDoRepository");
             var contextRepository = new InMemoryScenarioContextRepository();
             var scenarioContextRepository = new InMemoryScenarioContextRepository();
-
+            var todoListRepository = new FileToDoListRepository("ToDoLists");
 
             //сервисы
             var userService = new UserService(userRepository);//сервис по работе с пользователями
             var toDoService = new ToDoService(30, toDoRepository);//сервис по работе с листом заданий
             var reportService = new ToDoReportService(toDoRepository); // сервис по работе с отчетностью
+            var toDoListService = new ToDoListService(todoListRepository);
 
             //сценарии
             var scenarios = new List<IScenario>
             {
-                new AddTaskScenario(userService,toDoService, scenarioContextRepository)
+                new AddTaskScenario(userService,toDoService, scenarioContextRepository,toDoListService),
+                new AddListScenario(userService,toDoListService, scenarioContextRepository),
+                new DeleteListScenario(userService,toDoListService, scenarioContextRepository,toDoService)
             };
 
             //обработчик
-            var updateHandler = new UpdateHandler(botClient, userService, toDoService, reportService, scenarios, contextRepository);//обработчик команд
+            var updateHandler = new UpdateHandler(botClient, userService, toDoService, reportService, scenarios, contextRepository, toDoListService);//обработчик команд
 
             //методы событий начала и окончания обработки
             updateHandler.OnHandleUpdateStarted += text => Console.WriteLine($"Началась обработка сообщения:'{text}'");
