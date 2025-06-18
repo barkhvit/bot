@@ -36,9 +36,9 @@ namespace Bot.Core.Services
         //    return toDoItem;
         //}
 
-        public async Task<ToDoItem> Add(ToDoUser user, string text, DateTime deadLine, CancellationToken cancellationToken)
+        public async Task<ToDoItem> Add(ToDoUser user, string text, DateTime deadLine, ToDoList? toDoList, CancellationToken cancellationToken)
         {
-            ToDoItem toDoItem = new(user, text,deadLine);
+            ToDoItem toDoItem = new(user, text,deadLine, toDoList);
             await _toDoRepository.Add(toDoItem, cancellationToken);
             return toDoItem;
         }
@@ -89,6 +89,16 @@ namespace Bot.Core.Services
         public async Task<IReadOnlyList<ToDoItem>> Find(ToDoUser user, string namePrefix, CancellationToken cancellationToken)
         {
             return await _toDoRepository.Find(user.UserId, item => item.Name.StartsWith(namePrefix), cancellationToken);
+        }
+
+        public async Task<IReadOnlyList<ToDoItem>> GetByUserIdAndList(Guid userId, Guid? listId, CancellationToken ct)
+        {
+            var toDoItems = await _toDoRepository.GetActiveByUserId(userId, ct);
+            if (listId == null)
+            {
+                return toDoItems.Where(i => i.ToDoList == null).ToList().AsReadOnly();
+            }
+            return toDoItems.Where(i => i.ToDoList != null && i.ToDoList.Id == listId).ToList().AsReadOnly();
         }
     }
 }

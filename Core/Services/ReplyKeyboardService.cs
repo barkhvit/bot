@@ -27,7 +27,7 @@ namespace Bot.Core.Services
             return new ReplyKeyboardMarkup(new[]
             {
                 new KeyboardButton[]{"/help", "/info" },
-                new KeyboardButton[]{ "/showtasks", "/showalltasks"},
+                new KeyboardButton[]{ "/show", "/addtask"},
                 new KeyboardButton[]{"/report"}
             })
             {
