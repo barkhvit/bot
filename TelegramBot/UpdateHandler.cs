@@ -125,29 +125,31 @@ namespace Bot.TelegramBot
                 if (update.Type == UpdateType.CallbackQuery)
                 {
                     _callBackUpdateHandler.HandleUpdateAsync(_telegramBotClient, update, cancellationToken);
-                    return;
                 }
-                    
-
-                if (_text.Length == 0) throw new IncorrectInputException();
-                
-                //обработка команды от пользователя
-                switch (_text[0])
+                //обработка Message
+                else
                 {
-                    case "/start": await StartCommand(_user, update, cancellationToken);break;
-                    case "/help": await ComandHelp(_user, update, cancellationToken); break;
-                    case "/info": await botClient.SendMessage(update.Message.Chat, "| Версия программы: 2.0 | Дата создания: 30.03.2025 | Автор: Бархатов Виталий", cancellationToken: cancellationToken); ; break;
-                    case "/addtask": await AddTaskCommand(_user, update, _text, cancellationToken);break;
-                    //case "/show": await ShowTasksCommand(_user, update, cancellationToken); break;
-                    case "/show": await ShowListsCommand(_user, update, cancellationToken); break;
-                    case "/completetask": await CompleteTaskCommand(_user, update, _text, cancellationToken);break;
-                    case "/removetask": await RemoveTaskCommand(_user, update, _text, cancellationToken); break;
-                    case "/report": await ReportCommand(_user, update, _text, cancellationToken); break;
-                    case "/find": await FindCommandAsync(_user, update, _text, cancellationToken); break;
-                    case "/showusers": break;
-                    case "/exit": break;
-                    default: throw new IncorrectInputException(); 
+                    if (_text.Length == 0) throw new IncorrectInputException();
+
+                    //обработка команды от пользователя
+                    switch (_text[0])
+                    {
+                        case "/start": await StartCommand(_user, update, cancellationToken); break;
+                        case "/help": await ComandHelp(_user, update, cancellationToken); break;
+                        case "/info": await botClient.SendMessage(update.Message.Chat, "| Версия программы: 2.0 | Дата создания: 30.03.2025 | Автор: Бархатов Виталий", cancellationToken: cancellationToken); ; break;
+                        case "/addtask": await AddTaskCommand(_user, update, _text, cancellationToken); break;
+                        //case "/show": await ShowTasksCommand(_user, update, cancellationToken); break;
+                        case "/show": await ShowListsCommand(_user, update, cancellationToken); break;
+                        case "/completetask": await CompleteTaskCommand(_user, update, _text, cancellationToken); break;
+                        case "/removetask": await RemoveTaskCommand(_user, update, _text, cancellationToken); break;
+                        case "/report": await ReportCommand(_user, update, _text, cancellationToken); break;
+                        case "/find": await FindCommandAsync(_user, update, _text, cancellationToken); break;
+                        case "/showusers": break;
+                        case "/exit": break;
+                        default: throw new IncorrectInputException();
+                    }
                 }
+
             }
             catch (ArgumentException) //некорректный аргумент при вводе кол-ва задач и символов в задаче или задача == null
             {

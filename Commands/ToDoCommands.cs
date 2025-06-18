@@ -27,8 +27,8 @@ namespace Bot.Commands
         {
             var items = await _toDoService.GetByUserIdAndList(userId, listId, ct);
             string mesText = "";
-            if (items == null || items.Count==0) mesText = "Задач нет.";
 
+            if (items == null || items.Count==0) mesText = "Задач нет\\.";
             else
             {
                 mesText = "Список активных задач:";
