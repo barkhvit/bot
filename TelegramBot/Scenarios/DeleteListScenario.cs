@@ -75,8 +75,9 @@ namespace Bot.TelegramBot.Scenarios
                         case "yes":
                             var List = (ToDoList)context.Data["List"];
                             var User = await _userService.GetUser(update.CallbackQuery.From.Id, ct);
-                            var ToDoItems = await _toDoService.GetByUserIdAndList(User.UserId, List.Id, ct);
-                            foreach(var items in ToDoItems) await _toDoService.Delete(items.Id, ct);
+                            var ToDoItems = await _toDoService.GetAllByUserIdAndList(User.UserId, List.Id, ct);
+                            ToDoItems = ToDoItems.Where(i => i.State == ToDoItemState.Active).ToList();
+                            foreach (var items in ToDoItems) await _toDoService.Delete(items.Id, ct);
                             await _toDoListService.Delete(List.Id, ct);
                             mesText = $"Задачи из списка \"{List.Name}\" удалены.";
                             break;

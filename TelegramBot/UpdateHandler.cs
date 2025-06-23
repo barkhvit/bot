@@ -33,7 +33,6 @@ namespace Bot.TelegramBot
         private readonly IEnumerable<IScenario> _scenarios;
         private readonly IToDoListService _toDoListService;
         private readonly CallBackUpdateHandler _callBackUpdateHandler;
-        //private readonly string CommandsForRegUser = "\n /info \n /help \n /addtask \n /removetask \n /completetask \n /showtasks \n /showalltasks \n /find";//список команд для зарегистрированного пользователя
 
 
         //события 
@@ -73,6 +72,8 @@ namespace Bot.TelegramBot
                 await _scenarioContextRepository.SetContext(context.UserId, context, ct);
             }
         }
+
+        
 
 
         //Обработчик команд от пользователя 
@@ -138,10 +139,7 @@ namespace Bot.TelegramBot
                         case "/help": await ComandHelp(_user, update, cancellationToken); break;
                         case "/info": await botClient.SendMessage(update.Message.Chat, "| Версия программы: 2.0 | Дата создания: 30.03.2025 | Автор: Бархатов Виталий", cancellationToken: cancellationToken); ; break;
                         case "/addtask": await AddTaskCommand(_user, update, _text, cancellationToken); break;
-                        //case "/show": await ShowTasksCommand(_user, update, cancellationToken); break;
                         case "/show": await ShowListsCommand(_user, update, cancellationToken); break;
-                        case "/completetask": await CompleteTaskCommand(_user, update, _text, cancellationToken); break;
-                        case "/removetask": await RemoveTaskCommand(_user, update, _text, cancellationToken); break;
                         case "/report": await ReportCommand(_user, update, _text, cancellationToken); break;
                         case "/find": await FindCommandAsync(_user, update, _text, cancellationToken); break;
                         case "/showusers": break;
@@ -335,7 +333,7 @@ namespace Bot.TelegramBot
 
             if (Guid.TryParse(_text[1], out var guid))//проверяем корректность GUID
             {
-                await _todoService.MarkCompleted(guid, user.UserId, cancellationToken);
+                await _todoService.MarkCompleted(guid, cancellationToken);
                 await _telegramBotClient.SendMessage(update.Message.Chat, $"Задача GuidId: \"{_text[1]}\" выполнена ", cancellationToken: cancellationToken);
             }
             else
@@ -366,5 +364,7 @@ namespace Bot.TelegramBot
             }
             return text;
         }
+
+        
     }
 }

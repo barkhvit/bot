@@ -22,20 +22,6 @@ namespace Bot.Core.Services
         }
 
 
-        //добавляет задачу и возвращает ее
-        //public async Task<ToDoItem> Add(ToDoUser user, string[] text, DateTime deadLine, CancellationToken cancellationToken)
-        //{
-        //    if (user == null) throw new UserIsNotRegistratedException();//если пользователь не зарегистрирован
-        //    if (text.Length == 1 || text[1] == "") throw new IncorrectTaskException();//проверяем, что задача не пустая строка
-        //    if (!await IsNameNotRepeats(text[1], user.UserId, cancellationToken)) throw new DuplicateTaskException(text[1]); // проверяем задачу на дубликат для этого пользователя
-        //    if (text[1].Length > TaskLimit) throw new TaskLengthLimitException(text[1].Length, TaskLimit); //проверяем, что длина задачи не превышает допустимое значение TaskLimit
-        //    int i = text[1].Replace(" ", "").Length; if (i == 0) throw new IncorrectTaskException();//проверяем что строка не состоит только из пробелов
-
-        //    ToDoItem toDoItem = new(user, text[1], deadLine);
-        //    await _toDoRepository.Add(toDoItem, cancellationToken);
-        //    return toDoItem;
-        //}
-
         public async Task<ToDoItem> Add(ToDoUser user, string text, DateTime deadLine, ToDoList? toDoList, CancellationToken cancellationToken)
         {
             ToDoItem toDoItem = new(user, text,deadLine, toDoList);
@@ -57,20 +43,20 @@ namespace Bot.Core.Services
 
         
         //переводит статус задачи в исполнено
-        public async Task MarkCompleted(Guid id, Guid userId, CancellationToken cancellationToken)
+        public async Task MarkCompleted(Guid id, CancellationToken ct)
         {
-            bool isDelete = false;
-            var items = await _toDoRepository.GetActiveByUserId(userId, cancellationToken);
-            foreach (ToDoItem toDoItem in items)
+            bool isCompleted = false;
+            var items = await _toDoRepository.GetAll(ct);
+            var toDoItem = items.FirstOrDefault(i => i.Id == id);
+            if (toDoItem != null)
             {
-                if (toDoItem.Id == id)
-                {
-                    toDoItem.State = ToDoItemState.Completed;
-                    toDoItem.StateChangedAt = DateTime.UtcNow;
-                    isDelete = true;
-                }  
+                toDoItem.State = ToDoItemState.Completed;
+                toDoItem.StateChangedAt = DateTime.UtcNow;
+                await _toDoRepository.Delete(id, ct);
+                await _toDoRepository.Add(toDoItem, ct);
+                isCompleted = true;
             }
-            if (!isDelete) throw new NoтExistentTaskException();
+            if (!isCompleted) throw new NoтExistentTaskException();
         }
 
         //перебирает по именам активные задачи и проверяет есть такая задача или нет у данного пользователя
@@ -91,14 +77,20 @@ namespace Bot.Core.Services
             return await _toDoRepository.Find(user.UserId, item => item.Name.StartsWith(namePrefix), cancellationToken);
         }
 
-        public async Task<IReadOnlyList<ToDoItem>> GetByUserIdAndList(Guid userId, Guid? listId, CancellationToken ct)
+        public async Task<IReadOnlyList<ToDoItem>> GetAllByUserIdAndList(Guid userId, Guid? listId, CancellationToken ct)
         {
-            var toDoItems = await _toDoRepository.GetActiveByUserId(userId, ct);
+            var toDoItems = await _toDoRepository.GetAllByUserId(userId, ct);
             if (listId == null)
             {
                 return toDoItems.Where(i => i.ToDoList == null).ToList().AsReadOnly();
             }
             return toDoItems.Where(i => i.ToDoList != null && i.ToDoList.Id == listId).ToList().AsReadOnly();
+        }
+
+        public async Task<ToDoItem?> Get(Guid toDoItemId, CancellationToken ct)
+        {
+            var items = await _toDoRepository.GetAll(ct);
+            return items.FirstOrDefault(i => i.Id == toDoItemId);
         }
     }
 }

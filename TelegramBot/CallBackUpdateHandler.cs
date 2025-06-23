@@ -1,4 +1,5 @@
 ﻿using Bot.Commands;
+using Bot.Core.Entities;
 using Bot.Core.Services;
 using Bot.TelegramBot.Dto;
 using Bot.TelegramBot.Scenarios;
@@ -62,13 +63,14 @@ namespace Bot.TelegramBot
         {
             var user = await _userService.RegisterUser(update.CallbackQuery.From.Id, update.CallbackQuery.From.Username, ct);
             CallbackDto dto = CallbackDto.FromString(update.CallbackQuery.Data);
+            ToDoItemCallbackDto toDoItemCallbackDto = ToDoItemCallbackDto.FromString(update.CallbackQuery.Data);
+            PagedListCallbackDto pagedListCallbackDto = PagedListCallbackDto.FromString(update.CallbackQuery.Data);
             try
             {
                 switch (dto.Action)
                 {
                     case "show":
-                        ToDoListCallbackDto toDoListCallbackDto = ToDoListCallbackDto.FromString(update.CallbackQuery.Data);
-                        await _toDoCommands.ShowToDoItemsByUserIdandListId(update, user.UserId, toDoListCallbackDto.ToDoListId, ct);
+                        await _toDoCommands.ShowToDoItemsByUserIdandListId(pagedListCallbackDto,update, user.UserId, pagedListCallbackDto.ToDoListId, ToDoItemState.Active, ct);
                         break;
                     case "addlist":
                         var newContext = new ScenarioContext(update.CallbackQuery.From.Id, ScenarioType.AddList);
@@ -80,6 +82,19 @@ namespace Bot.TelegramBot
                         await _scenarioContextRepository.SetContext(update.CallbackQuery.From.Id, deleteListContext, ct);
                         await ProcessScenario(deleteListContext, update, ct);
                         break;
+                    case "showtask":
+                        if(toDoItemCallbackDto.toDoItemId!=null) await _toDoCommands.ShowDetailToDoItems(update, (Guid)toDoItemCallbackDto.toDoItemId, ct);
+                        break;
+                    case "show_completed":
+                        await _toDoCommands.ShowToDoItemsByUserIdandListId(pagedListCallbackDto,update, user.UserId, pagedListCallbackDto.ToDoListId, ToDoItemState.Completed, ct);
+                        break;
+                    case "completetask":
+                        if (toDoItemCallbackDto.toDoItemId != null) await _toDoCommands.MakeToDoItemCompleted(update, (Guid)toDoItemCallbackDto.toDoItemId, ct);
+                        break;
+                    case "deletetask":
+                        if (toDoItemCallbackDto.toDoItemId != null) await _toDoCommands.DeleteToDoItem(update, (Guid)toDoItemCallbackDto.toDoItemId, ct);
+                        break;
+
                 }
             }
             catch
