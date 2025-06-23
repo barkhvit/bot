@@ -174,5 +174,20 @@ namespace Bot.Infrastructure.DataAccess
             string filePath = Path.Combine(_storageDirectory, index);
             await File.WriteAllTextAsync(filePath, json);
         }
+
+        public async Task<IReadOnlyList<ToDoItem>> GetAll(CancellationToken ct)
+        {
+            List<ToDoItem> toDoItems = new();
+            foreach(var dir in Directory.GetDirectories(_storageDirectory))
+            {
+                foreach(var file in Directory.GetFiles(dir))
+                {
+                    string json = await File.ReadAllTextAsync(file, ct);
+                    var item = JsonSerializer.Deserialize<ToDoItem>(json);
+                    if(item!=null) toDoItems.Add(item);
+                }
+            }
+            return toDoItems.AsReadOnly();
+        }
     }
 }

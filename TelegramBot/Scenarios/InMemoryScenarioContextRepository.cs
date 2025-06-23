@@ -18,7 +18,7 @@ namespace Bot.TelegramBot.Scenarios
 
         public Task ResetContext(long userId, CancellationToken ct)
         {
-            _contexts.Remove(userId);
+            _contexts.Remove(userId,out ScenarioContext? sc);
             return Task.CompletedTask;
         }
 

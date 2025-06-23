@@ -21,5 +21,7 @@ namespace Bot.Core.DataAccess
         Task<int> CountActive(Guid userId, CancellationToken cancellationToken);
         Task<IReadOnlyList<ToDoItem>> Find(Guid userId, Func<ToDoItem, bool> predicate, CancellationToken cancellationToken);
 
+        Task<IReadOnlyList<ToDoItem>> GetAll(CancellationToken ct);
+
     }
 }

@@ -74,5 +74,10 @@ namespace Bot.Infrastructure.DataAccess
             var result = await GetAllByUserId(userId, cancellationToken);
             return result.Where(predicate).ToList();
         }
+
+        public Task<IReadOnlyList<ToDoItem>> GetAll(CancellationToken ct)
+        {
+            throw new NotImplementedException();
+        }
     }
 }
