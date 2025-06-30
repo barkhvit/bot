@@ -270,8 +270,6 @@ namespace Bot.TelegramBot
             var newContext = new ScenarioContext(update.Message.From.Id, ScenarioType.AddTask);
             await _scenarioContextRepository.SetContext(update.Message.From.Id, newContext, cancellationToken);
             await ProcessScenario(newContext, update, cancellationToken);
-            //ToDoItem toDoItem = await _todoService.Add(_user, _text, cancellationToken);
-            //await _telegramBotClient.SendMessage(update.Message.Chat, $"Задача \"{toDoItem.Name}\" добавлена, GuidId: `{toDoItem.Id}`", cancellationToken: cancellationToken, parseMode: ParseMode.MarkdownV2);
         }
         
         private async Task ComandHelp(ToDoUser? _user, Update update, CancellationToken cancellationToken)//команда help

@@ -29,15 +29,12 @@ namespace Bot.Core.Entities
             Deadline = deadLine;
             ToDoList = toDoList;
         }
-        public ToDoItem(ToDoUser user,string name, DateTime deadLine, ToDoList? toDoList)
+        
+        // Основной конструктор для создания новых задач
+        public ToDoItem(ToDoUser user, string name, DateTime deadLine, ToDoList? toDoList)
+            : this(Guid.NewGuid(), user, name, DateTime.UtcNow, ToDoItemState.Active, deadLine, toDoList)
         {
-            Id = Guid.NewGuid();
-            User = user;
-            Name = name;
-            CreatedAt = DateTime.UtcNow;
-            State = ToDoItemState.Active;
-            Deadline = deadLine;
-            ToDoList = toDoList;
+            // Всё уже сделано в [JsonConstructor]
         }
 
     }

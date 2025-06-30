@@ -38,7 +38,7 @@ namespace Bot
             //сценарии
             var scenarios = new List<IScenario>
             {
-                new AddTaskScenario(userService,toDoService, scenarioContextRepository,toDoListService),
+                new AddTaskScenario(userService,toDoService, toDoListService),
                 new AddListScenario(userService,toDoListService, scenarioContextRepository),
                 new DeleteListScenario(userService,toDoListService, scenarioContextRepository,toDoService)
             };
