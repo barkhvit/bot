@@ -1,6 +1,7 @@
 ﻿using Bot.Core.Entities;
 using Bot.Core.Services;
 using Bot.Helpers;
+using Bot.TelegramBot.Dto;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -17,12 +18,12 @@ namespace Bot.TelegramBot.Scenarios
     {
         private readonly IUserService _userService;
         private readonly IToDoService _toDoService;
-        private readonly IScenarioContextRepository _scenarioContextRepository;
-        public AddTaskScenario(IUserService userService, IToDoService toDoService, IScenarioContextRepository scenarioContextRepository)
+        private readonly IToDoListService _toDoListService;
+        public AddTaskScenario(IUserService userService, IToDoService toDoService, IToDoListService toDoListService)
         {
             _userService = userService;
             _toDoService = toDoService;
-            _scenarioContextRepository = scenarioContextRepository;
+            _toDoListService = toDoListService;
         }
         public bool CanHandle(ScenarioType scenario) => scenario == ScenarioType.AddTask;
 
@@ -37,32 +38,52 @@ namespace Bot.TelegramBot.Scenarios
                     await bot.SendMessage(
                         chatId: update.Message.Chat.Id,
                         text: "Введите название задачи:",
-                        replyMarkup: KeyBoards.GetCancelKeyboard(),
+                        replyMarkup: Helpers.KeyBoards.GetCancelKeyboard(),
                         cancellationToken:ct);
                     context.CurrentStep = "Name";
                     scenarioResult = ScenarioResult.Transition; break;
 
                 case "Name":
                     context.Data["Name"] = update.Message.Text;
+                    var User = await _userService.GetUser(update.Message.From.Id, ct);
+                    var lists = await _toDoListService.GetUserLists(User.UserId, ct);
                     await bot.SendMessage(
                         chatId: update.Message.Chat.Id,
-                        text: "Введите срок выполнения задачи в формате dd.MM.yyyy:",
+                        text: "Выберите список:",
                         cancellationToken: ct,
-                        replyMarkup: KeyBoards.GetCancelKeyboard());
+                        replyMarkup: Dto.KeyBoards.KeyBoardForListsOnlyNames(lists,true));
+                    context.CurrentStep = "List";
+                    scenarioResult = ScenarioResult.Transition; break;
+
+                case "List":
+                    ToDoListCallbackDto toDoListCallbackDto = ToDoListCallbackDto.FromString(update.CallbackQuery.Data);
+                    if (toDoListCallbackDto.ToDoListId == null)
+                    {
+                        context.Data["List"] = null;
+                    }
+                    else context.Data["List"] = await _toDoListService.Get((Guid)toDoListCallbackDto.ToDoListId,ct);
+
+                    await bot.SendMessage(
+                        chatId: update.CallbackQuery.Message.Chat.Id,
+                        text: "Введите срок выполнения в формате: дд.мм.гггг",
+                        cancellationToken: ct,
+                        replyMarkup: InlineKeyboardButton.WithCallbackData("❌Отменить", "cancel"));
                     context.CurrentStep = "DeadLine";
                     scenarioResult = ScenarioResult.Transition; break;
 
                 case "DeadLine": 
                     if(DateTime.TryParseExact(update.Message.Text,"dd.MM.yyyy",CultureInfo.InvariantCulture,DateTimeStyles.None, out var deadline))
                     {
-                        var User = (ToDoUser)context.Data["User"];
+                        var _user = (ToDoUser)context.Data["User"];
                         var Name = (string)context.Data["Name"];
-                        await _toDoService.Add(User, Name, deadline, ct);
+                        var List = (ToDoList)context.Data["List"];
+                        await _toDoService.Add(_user, Name, deadline, List, ct);
                         await bot.SendMessage(
                             chatId: update.Message.Chat.Id,
                             text: "Задача успешно добавлена!",
                             cancellationToken:ct,
-                            replyMarkup: KeyBoards.GetDefaultKeyboard());
+                            replyMarkup: Helpers.KeyBoards.GetDefaultKeyboard());
+                        context.CurrentStep = "List";
                         scenarioResult = ScenarioResult.Completed;
                     }
                     else
@@ -70,11 +91,13 @@ namespace Bot.TelegramBot.Scenarios
                         await bot.SendMessage(
                             chatId: update.Message.Chat.Id,
                             text: "Неверный формат даты. Пожалуйста, введите дату в формате dd.MM.yyyy:",
-                            replyMarkup: KeyBoards.GetCancelKeyboard(),
+                            replyMarkup: Helpers.KeyBoards.GetCancelKeyboard(),
                             cancellationToken:ct);
                         scenarioResult = ScenarioResult.Transition;
                     }
-                        break;
+                    break;
+
+                
 
                 default: scenarioResult = ScenarioResult.Transition; break;
             }

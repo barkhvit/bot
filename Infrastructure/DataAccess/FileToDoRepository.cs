@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Reflection.Metadata.Ecma335;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -37,7 +38,7 @@ namespace Bot.Infrastructure.DataAccess
             string directoryPath = Path.Combine(_storageDirectory, item.User.UserId.ToString());
             Directory.CreateDirectory(directoryPath);
             string filePath = Path.Combine(directoryPath, $"{item.Id}.json");
-            string json = JsonSerializer.Serialize(item, new JsonSerializerOptions { WriteIndented = true });
+            string json = JsonSerializer.Serialize(item, new JsonSerializerOptions { WriteIndented = true , Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
             await File.WriteAllTextAsync(filePath, json, cancellationToken);
 
             //обновляем index.json
@@ -173,6 +174,21 @@ namespace Bot.Infrastructure.DataAccess
             string json = JsonSerializer.Serialize(items, new JsonSerializerOptions { WriteIndented = true });
             string filePath = Path.Combine(_storageDirectory, index);
             await File.WriteAllTextAsync(filePath, json);
+        }
+
+        public async Task<IReadOnlyList<ToDoItem>> GetAll(CancellationToken ct)
+        {
+            List<ToDoItem> toDoItems = new();
+            foreach(var dir in Directory.GetDirectories(_storageDirectory))
+            {
+                foreach(var file in Directory.GetFiles(dir))
+                {
+                    string json = await File.ReadAllTextAsync(file, ct);
+                    var item = JsonSerializer.Deserialize<ToDoItem>(json);
+                    if(item!=null) toDoItems.Add(item);
+                }
+            }
+            return toDoItems.AsReadOnly();
         }
     }
 }

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Telegram.Bot.Types;
@@ -34,7 +35,8 @@ namespace Bot.Infrastructure.DataAccess
         {
             string directoryPath = Path.Combine(_storageUsers);
             string filePath = Path.Combine(directoryPath, $"{user.UserId}.json");
-            string json = JsonSerializer.Serialize<ToDoUser>(user, new JsonSerializerOptions { WriteIndented = true });
+            string json = JsonSerializer.Serialize<ToDoUser>(user, new JsonSerializerOptions { WriteIndented = true ,
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping});
             await File.WriteAllTextAsync(filePath, json, cancellationToken);
         }
 
