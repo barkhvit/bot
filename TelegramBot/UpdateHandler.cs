@@ -41,7 +41,7 @@ namespace Bot.TelegramBot
 
         //КОНСТРУКТОР
         public UpdateHandler(ITelegramBotClient telegramBotClient, IUserService userService, IToDoService todoService, IToDoReportService toDoReportService,
-            IEnumerable<IScenario> scenarios, IScenarioContextRepository contextRepository, IToDoListService toDoListService)
+            IEnumerable<IScenario> scenarios, IScenarioContextRepository contextRepository, IToDoListService toDoListService, CallBackUpdateHandler callBackUpdateHandler)
         {   
             _telegramBotClient = telegramBotClient;
             _userService = userService;

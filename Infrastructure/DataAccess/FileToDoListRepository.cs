@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -29,10 +30,11 @@ namespace Bot.Infrastructure.DataAccess
         }
         public async Task Add(ToDoList list, CancellationToken ct)
         {
-            string dirPath = Path.Combine(_storage, list.User.telegramUserId.ToString());
+            string dirPath = Path.Combine(_storage, list.User.UserId.ToString());
             Directory.CreateDirectory(dirPath);
             string filePath = Path.Combine(dirPath, $"{list.Id.ToString()}.json");
-            string json = JsonSerializer.Serialize(list, new JsonSerializerOptions { WriteIndented = true });
+            string json = JsonSerializer.Serialize(list, new JsonSerializerOptions { WriteIndented = true , 
+                Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
             await File.WriteAllTextAsync(filePath, json, ct);
         }
 
@@ -41,7 +43,7 @@ namespace Bot.Infrastructure.DataAccess
             var list = await Get(id, ct);
             if (list != null)
             {
-                string filePath = Path.Combine(_storage, list.User.telegramUserId.ToString(), $"{id}.json");
+                string filePath = Path.Combine(_storage, list.User.UserId.ToString(), $"{id}.json");
                 if (File.Exists(filePath)) File.Delete(filePath);
             }
         }
@@ -60,8 +62,19 @@ namespace Bot.Infrastructure.DataAccess
 
         public async Task<IReadOnlyList<ToDoList>> GetByUserId(Guid userId, CancellationToken ct)
         {
-            var lists = await GetAll(ct);
-            return lists.Where(l => l.User.UserId == userId).ToList().AsReadOnly();
+            var lists = new List<ToDoList>();
+            var dir = Path.Combine(_storage, userId.ToString());
+
+            //Если у пользователя нет списков
+            if (!Directory.Exists(dir)) return lists.AsReadOnly();
+
+            foreach(var file in Directory.GetFiles(dir))
+            {
+                string json = await File.ReadAllTextAsync(file, ct);
+                ToDoList? toDoList = JsonSerializer.Deserialize<ToDoList>(json);
+                if (toDoList != null) lists.Add(toDoList);
+            }
+            return lists.AsReadOnly();
         }
 
         public async Task<IReadOnlyList<ToDoList>> GetAll(CancellationToken ct)

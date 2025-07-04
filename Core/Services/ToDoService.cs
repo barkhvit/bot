@@ -24,6 +24,8 @@ namespace Bot.Core.Services
 
         public async Task<ToDoItem> Add(ToDoUser user, string text, DateTime deadLine, ToDoList? toDoList, CancellationToken cancellationToken)
         {
+            if (user == null) throw new UserIsNotRegistratedException();//если пользователь не зарегистрирован
+            if (text == "") throw new IncorrectTaskException();//проверяем, что задача не пустая строка
             ToDoItem toDoItem = new(user, text,deadLine, toDoList);
             await _toDoRepository.Add(toDoItem, cancellationToken);
             return toDoItem;

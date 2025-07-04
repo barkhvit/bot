@@ -19,13 +19,11 @@ namespace Bot.TelegramBot.Scenarios
         private readonly IUserService _userService;
         private readonly IToDoService _toDoService;
         private readonly IToDoListService _toDoListService;
-        private readonly IScenarioContextRepository _scenarioContextRepository;
-        public AddTaskScenario(IUserService userService, IToDoService toDoService, IScenarioContextRepository scenarioContextRepository, IToDoListService toDoListService)
+        public AddTaskScenario(IUserService userService, IToDoService toDoService, IToDoListService toDoListService)
         {
             _userService = userService;
             _toDoService = toDoService;
             _toDoListService = toDoListService;
-            _scenarioContextRepository = scenarioContextRepository;
         }
         public bool CanHandle(ScenarioType scenario) => scenario == ScenarioType.AddTask;
 

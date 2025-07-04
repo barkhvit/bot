@@ -44,7 +44,9 @@ namespace Bot
             };
 
             //обработчик
-            var updateHandler = new UpdateHandler(botClient, userService, toDoService, reportService, scenarios, contextRepository, toDoListService);//обработчик команд
+            var callBackUpdateHandler = new CallBackUpdateHandler(botClient, userService, toDoService, reportService, scenarios, contextRepository, toDoListService);
+            var updateHandler = new UpdateHandler(botClient, userService, toDoService, reportService, scenarios, contextRepository, toDoListService, callBackUpdateHandler);//обработчик команд
+            
 
             //методы событий начала и окончания обработки
             updateHandler.OnHandleUpdateStarted += text => Console.WriteLine($"Началась обработка сообщения:'{text}'");

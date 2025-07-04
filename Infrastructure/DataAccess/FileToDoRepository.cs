@@ -8,6 +8,7 @@ using System.Reflection;
 using System.Reflection.Metadata.Ecma335;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -37,7 +38,7 @@ namespace Bot.Infrastructure.DataAccess
             string directoryPath = Path.Combine(_storageDirectory, item.User.UserId.ToString());
             Directory.CreateDirectory(directoryPath);
             string filePath = Path.Combine(directoryPath, $"{item.Id}.json");
-            string json = JsonSerializer.Serialize(item, new JsonSerializerOptions { WriteIndented = true });
+            string json = JsonSerializer.Serialize(item, new JsonSerializerOptions { WriteIndented = true , Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping });
             await File.WriteAllTextAsync(filePath, json, cancellationToken);
 
             //обновляем index.json
