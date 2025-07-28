@@ -9,6 +9,7 @@ using Telegram.Bot;
 using System.Threading.Tasks;
 using Telegram.Bot.Types.ReplyMarkups;
 using Bot.TelegramBot.Scenarios;
+using Bot.Core.DataAccess;
 
 namespace Bot
 {
@@ -22,12 +23,21 @@ namespace Bot
             string Token = Environment.GetEnvironmentVariable("TELEGRAM_BOT_TOKEN", EnvironmentVariableTarget.User);
             var botClient = new TelegramBotClient(Token);
 
+            var connectionString = "User ID=postgres;Password=Alekseev4+;Host=localhost;Port=5432;Database=ToDoList;";
+
+            // Создаем фабрику 
+            IDataContextFactory<ToDoDataContext> contextFactory = new DataContextFactory(connectionString);
+
             //репозитории
-            var userRepository = new FileUserRepository("usersRepository");
-            var toDoRepository = new FileToDoRepository("toDoRepository");
+            //var userRepository = new FileUserRepository("usersRepository");
+            //var toDoRepository = new FileToDoRepository("toDoRepository");
+            //var todoListRepository = new FileToDoListRepository("ToDoLists");
+            var userRepository = new SqlUserRepository(contextFactory);
+            var toDoRepository = new SqlToDoRepository(contextFactory);
+            var todoListRepository = new SqlToDoListRepository(contextFactory);
             var contextRepository = new InMemoryScenarioContextRepository();
             var scenarioContextRepository = new InMemoryScenarioContextRepository();
-            var todoListRepository = new FileToDoListRepository("ToDoLists");
+            
 
             //сервисы
             var userService = new UserService(userRepository);//сервис по работе с пользователями
