@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Telegram.Bot.Types.ReplyMarkups;
 using Bot.TelegramBot.Scenarios;
 using Bot.Core.DataAccess;
+using Bot.BackgroundTask;
 
 namespace Bot
 {
@@ -68,6 +69,19 @@ namespace Bot
             // Запускаем фоновую задачу для обработки нажатия клавиши
             var keyMonitorTask = Task.Run(() => MonitorKeyboard(botClient, _cts));
 
+            //1. Создаем runner для фоновых задач
+            var backgroundTaskRunner = new BackgroundTaskRunner();
+
+            //2. Регистрируем задачу сброса сценариев
+            //    Таймаут - 1 час, передаем репозиторий и клиент бота
+            backgroundTaskRunner.AddTask(new ResetScenarioBackgroundTask(
+                TimeSpan.FromHours(1), scenarioContextRepository,
+                botClient));
+
+            //3. Запускаем фоновые задачи
+            //    Передаем токен отмены, чтобы задачи могли остановиться при завершении приложения
+            backgroundTaskRunner.StartTasks(_cts.Token);
+
             try
             {
                 //botClient.StartReceiving(updateHandler, _cts);
@@ -88,6 +102,13 @@ namespace Bot
             }
             finally
             {
+                // При завершении приложения:
+                // Останавливаем фоновые задачи
+                await backgroundTaskRunner.StopTasks(CancellationToken.None);
+
+                // Освобождаем ресурсы
+                backgroundTaskRunner.Dispose();
+
                 if (updateHandler != null)
                 {
                     //отписка от событий
