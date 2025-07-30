@@ -37,7 +37,6 @@ namespace Bot
             var toDoRepository = new SqlToDoRepository(contextFactory);
             var todoListRepository = new SqlToDoListRepository(contextFactory);
             var contextRepository = new InMemoryScenarioContextRepository();
-            var scenarioContextRepository = new InMemoryScenarioContextRepository();
             
 
             //сервисы
@@ -50,8 +49,8 @@ namespace Bot
             var scenarios = new List<IScenario>
             {
                 new AddTaskScenario(userService,toDoService, toDoListService),
-                new AddListScenario(userService,toDoListService, scenarioContextRepository),
-                new DeleteListScenario(userService,toDoListService, scenarioContextRepository,toDoService)
+                new AddListScenario(userService,toDoListService, contextRepository),
+                new DeleteListScenario(userService,toDoListService, contextRepository,toDoService)
             };
 
             //обработчик
@@ -75,7 +74,7 @@ namespace Bot
             //2. Регистрируем задачу сброса сценариев
             //    Таймаут - 1 час, передаем репозиторий и клиент бота
             backgroundTaskRunner.AddTask(new ResetScenarioBackgroundTask(
-                TimeSpan.FromHours(1), scenarioContextRepository,
+                TimeSpan.FromHours(1), contextRepository,
                 botClient));
 
             //3. Запускаем фоновые задачи
