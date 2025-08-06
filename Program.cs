@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Telegram.Bot.Types.ReplyMarkups;
 using Bot.TelegramBot.Scenarios;
 using Bot.Core.DataAccess;
+using Bot.BackgroundTask;
 
 namespace Bot
 {
@@ -36,7 +37,6 @@ namespace Bot
             var toDoRepository = new SqlToDoRepository(contextFactory);
             var todoListRepository = new SqlToDoListRepository(contextFactory);
             var contextRepository = new InMemoryScenarioContextRepository();
-            var scenarioContextRepository = new InMemoryScenarioContextRepository();
             
 
             //сервисы
@@ -49,8 +49,8 @@ namespace Bot
             var scenarios = new List<IScenario>
             {
                 new AddTaskScenario(userService,toDoService, toDoListService),
-                new AddListScenario(userService,toDoListService, scenarioContextRepository),
-                new DeleteListScenario(userService,toDoListService, scenarioContextRepository,toDoService)
+                new AddListScenario(userService,toDoListService, contextRepository),
+                new DeleteListScenario(userService,toDoListService, contextRepository,toDoService)
             };
 
             //обработчик
@@ -67,6 +67,19 @@ namespace Bot
 
             // Запускаем фоновую задачу для обработки нажатия клавиши
             var keyMonitorTask = Task.Run(() => MonitorKeyboard(botClient, _cts));
+
+            //1. Создаем runner для фоновых задач
+            var backgroundTaskRunner = new BackgroundTaskRunner();
+
+            //2. Регистрируем задачу сброса сценариев
+            //    Таймаут - 1 час, передаем репозиторий и клиент бота
+            backgroundTaskRunner.AddTask(new ResetScenarioBackgroundTask(
+                TimeSpan.FromHours(1), contextRepository,
+                botClient));
+
+            //3. Запускаем фоновые задачи
+            //    Передаем токен отмены, чтобы задачи могли остановиться при завершении приложения
+            backgroundTaskRunner.StartTasks(_cts.Token);
 
             try
             {
@@ -88,6 +101,13 @@ namespace Bot
             }
             finally
             {
+                // При завершении приложения:
+                // Останавливаем фоновые задачи
+                await backgroundTaskRunner.StopTasks(CancellationToken.None);
+
+                // Освобождаем ресурсы
+                backgroundTaskRunner.Dispose();
+
                 if (updateHandler != null)
                 {
                     //отписка от событий
